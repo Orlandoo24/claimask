@@ -25,25 +25,21 @@
 
 1. 钱包链接
 
-   1. ![image-20240321220345790](/Users/123jiaru/Library/Application Support/typora-user-images/image-20240321220345790.png)
+   1. ![Image text](https://github.com/Orlandoo24/claimask/blob/main/img/image-20240321220345790.png)
 
-   2. ![image-20240321220430461](/Users/123jiaru/Library/Application Support/typora-user-images/image-20240321220430461.png)
+   2. ![Image text](https://github.com/Orlandoo24/claimask/blob/main/img/image-20240321220430461.png)
 
-      
-
-   3. ![image-20240321220523373](/Users/123jiaru/Library/Application Support/typora-user-images/image-20240321220523373.png)
-
-   4. 
+   3. ![Image text](https://github.com/Orlandoo24/claimask/blob/main/img/image-20240321220523373.png) 
 
 2. claim 进行资格领取
 
-   1. ![image-20240321220621749](/Users/123jiaru/Library/Application Support/typora-user-images/image-20240321220621749.png)
+   1. ![Image text](https://github.com/Orlandoo24/claimask/blob/main/img/image-20240321220621749.png)
 
 3. 钱包断开
 
-   1. ![image-20240321220644503](/Users/123jiaru/Library/Application Support/typora-user-images/image-20240321220644503.png)
+   1. ![Image text](https://github.com/Orlandoo24/claimask/blob/main/img/image-20240321220644503.png)
 
-   2. ![image-20240321220723172](/Users/123jiaru/Library/Application Support/typora-user-images/image-20240321220723172.png)
+   2. ![Image text](https://github.com/Orlandoo24/claimask/blob/main/img/image-20240321220723172.png)
 
       
 
