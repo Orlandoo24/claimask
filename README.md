@@ -13,7 +13,7 @@
 - Redis
 - MySQL
 - Gorm
-- Bwmarrin/snowflake 雪花算法生成分布式 ID
+- Bwmarrin/snowflake 订单 ID 生层
 
 前端技术栈
 
