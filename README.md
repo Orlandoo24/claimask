@@ -52,10 +52,10 @@
 #### 使用说明
 
 1.  克隆本项目或在发行版中下载源代码
-2.  运行 sql 脚本，并启动 Nacos 与 Zipkin
-3.  启动 Exam-Backstage 下的服务
-4.  前端项目 npm install 安装所需依赖
-5.  运行前端项目即可完成项目启动
+2.  安装 node 和 golang 环境
+3.  前端工程依赖：参考 claimask/web3-claimask/README.md 完成前端依赖和运行 
+4.  后端工程依赖：进入 claimask/claim 运行 go mod tidy 完成依赖下载，再运行 go run claim.go 跑起后端服务
+   
 
 #### 参与贡献
 
