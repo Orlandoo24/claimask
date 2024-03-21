@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/bwmarrin/snowflake"
@@ -34,6 +35,14 @@ var (
 	DB *gorm.DB
 	RD *redis.Client
 )
+
+// 定义请求参数结构体
+type ClaimParam struct {
+	Address string `json:"address"`
+}
+
+// 全局变量声明
+var globalClaimParam = ClaimParam{}
 
 func main() {
 	var err error
@@ -75,11 +84,6 @@ func main() {
 
 	// 定义领奖接口
 	h.POST("/claim", func(c context.Context, ctx *app.RequestContext) {
-		// 定义请求参数结构体
-		type ClaimParam struct {
-			Address string `json:"address"`
-		}
-
 		// 创建参数实例
 		var param ClaimParam
 		// 绑定请求参数到结构体
@@ -94,52 +98,17 @@ func main() {
 		}
 
 		// 从 Redis 中获取奖品数量
-		var prizes int
-		for {
-			err := RD.Watch(func(tx *redis.Tx) error {
-				var err error
-				prizes, err = tx.Get("prizes").Int()
-				if err != nil {
-					return err
-				}
-
-				// 如果奖品数量大于 0，则递减奖品数量
-				if prizes > 0 {
-					_, err = tx.Pipelined(func(pipe redis.Pipeliner) error {
-						// 在 redis 减少奖品数量
-						pipe.Decr("prizes")
-						return nil
-					})
-					if err != nil {
-						return err
-					}
-					return nil
-				}
-				return errors.New("奖品已经领完了")
-			}, "prizes")
-
-			if err == nil {
-				break
-			} else if err == redis.TxFailedErr {
-				continue // Retry
-			} else {
-				ctx.String(consts.StatusInternalServerError, "奖品数量减少失败")
-				return
-			}
+		err := ClaimPrize(RD)
+		if err != nil {
+			// 处理错误，比如返回给客户端错误信息等
+			ctx.String(consts.StatusInternalServerError, "奖品数量减少失败")
+			return
 		}
 
 		// 创建订单
-		order := &Order{
-			OrderID:    generateOrderID(),
-			Address:    param.Address,
-			Json1:      `{"key": "value"}`,
-			InsertTime: time.Now(), // 分配当前时间戳值
-			UpdateTime: time.Now(), // 分配当前时间戳值
-		}
-
-		// 在数据库中创建订单
-		dbErr := DB.Table("order_id").Create(order).Error
-		if dbErr != nil {
+		err = CreateOrder(param)
+		if err != nil {
+			// 处理错误，比如返回给客户端错误信息等
 			ctx.String(consts.StatusInternalServerError, "订单创建失败")
 			return
 		}
@@ -149,15 +118,79 @@ func main() {
 	})
 
 	// 新增接口 "/init" 实现奖品数量重置功能
-	h.GET("/init", func(c context.Context, ctx *app.RequestContext) {
-		// 重置奖品数量为 10
-		RD.Set("prizes", 5, 0)
-		ctx.String(consts.StatusOK, "奖品数量已重置为 5")
+	h.GET("/init/:quantity", func(c context.Context, ctx *app.RequestContext) {
+		// 从路径参数中获取奖品重置的数量
+		quantityStr := ctx.Param("quantity")
+		quantity, err := strconv.Atoi(quantityStr)
+		if err != nil {
+			ctx.String(consts.StatusBadRequest, "无效的数量")
+			return
+		}
+
+		// 重置奖品数量为指定值
+		RD.Set("prizes", quantity, 0)
+		ctx.String(consts.StatusOK, fmt.Sprintf("奖品数量已重置为 %d", quantity))
 	})
 
 	// 启动服务器
 	h.Spin()
 
+}
+
+func ClaimPrize(RD *redis.Client) error {
+	var prizes int
+	for {
+		err := RD.Watch(func(tx *redis.Tx) error {
+			var err error
+			prizes, err = tx.Get("prizes").Int()
+			if err != nil {
+				return err
+			}
+
+			// 如果奖品数量大于 0，则递减奖品数量
+			if prizes > 0 {
+				_, err = tx.Pipelined(func(pipe redis.Pipeliner) error {
+					// 在 redis 减少奖品数量
+					pipe.Decr("prizes")
+					return nil
+				})
+				if err != nil {
+					return err
+				}
+				return nil
+			}
+			return errors.New("奖品已经领完了")
+		}, "prizes")
+
+		if err == nil {
+			// 如果没有错误，表示奖品数量获取和递减成功，跳出循环
+			break
+		} else if err == redis.TxFailedErr {
+			// 如果出现 redis.TxFailedErr 错误，表示事务失败，需要重试
+			continue // Retry
+		} else {
+			// 如果出现其他错误，返回给客户端错误信息，并结束处理
+			return err
+		}
+	}
+	return nil
+}
+
+func CreateOrder(param ClaimParam) error {
+	order := &Order{
+		OrderID:    generateOrderID(),
+		Address:    param.Address,
+		Json1:      `{"key": "value"}`,
+		InsertTime: time.Now(),
+		UpdateTime: time.Now(),
+	}
+
+	// 在数据库中创建订单
+	dbErr := DB.Table("order_id").Create(order).Error
+	if dbErr != nil {
+		return dbErr
+	}
+	return nil
 }
 
 // 分布式 id
