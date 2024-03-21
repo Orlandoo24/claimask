@@ -9,7 +9,7 @@
 后端技术栈
 
 - Golang
-- Heartz
+- Hertz
 - Redis
 - MySQL
 - Gorm
