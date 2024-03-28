@@ -117,6 +117,21 @@ func main() {
 		ctx.JSON(consts.StatusOK, utils.H{"param": param})
 	})
 
+	// 定义数量查询接口
+	h.GET("/query", func(c context.Context, ctx *app.RequestContext) {
+
+		var prizes int
+		// 从 redis 获取数量
+		prizes, err := RD.Get("prizes").Int()
+		if err != nil {
+			ctx.String(consts.StatusInternalServerError, "无法获取数量")
+			return
+		}
+
+		// 返回成功信息
+		ctx.JSON(consts.StatusOK, utils.H{"prizes": prizes})
+	})
+
 	// 新增接口 "/init" 实现奖品数量重置功能
 	h.GET("/init/:quantity", func(c context.Context, ctx *app.RequestContext) {
 		// 从路径参数中获取奖品重置的数量
