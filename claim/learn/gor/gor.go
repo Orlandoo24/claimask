@@ -16,25 +16,27 @@ const targetURL = "http://127.0.0.1:8870/claim"
 // 声明一个互斥锁，用于保护总时间和请求计数
 var (
 	totalTime time.Duration
-	mutex     sync.Mutex
+	// mutex     sync.Mutex
 )
 
 func main() {
-	// 设置随机数种子
-	rand.Seed(time.Now().UnixNano())
 
 	// 记录开始时间
 	startTime := time.Now()
 
 	// 并发发起10,000个请求
 	var wg sync.WaitGroup
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 30000; i++ {
+		// 计数器+1
 		wg.Add(1)
 		go func() {
 			sendRequest()
+			// 计数器 -1
 			wg.Done()
 		}()
 	}
+
+	//
 	wg.Wait()
 
 	// 计算总时间

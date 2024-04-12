@@ -9,7 +9,7 @@ export default function Home() {
 
   // 创建一个新的axios实例，并设置CORS相关的头部信息
   const axiosInstance = axios.create({
-    baseURL: 'http://127.0.0.1:8870',
+    baseURL: 'http://127.0.0.1:8880',
     headers: {
       'User-Agent': 'Apifox/1.0.0 (https://apifox.com)',
       'Content-Type': 'application/json',
@@ -95,7 +95,7 @@ export default function Home() {
   return (
     <div className="flex flex-col items-center justify-center">   
       <button onClick={connect} className="py-2 mt-20 mb-4 text-lg font-bold text-white rounded-lg w-56 bg-blue-600 hover:bg-blue-800">Connect to MetaMask</button>
-      {active ? <span>Connected with <b>{account}</b></span> : <span>Not connected</span>}
+      {active ? <span> Connected with <b>{account}</b></span> : <span>Not connected</span>}
       <button onClick={disconnect} className="py-2 mt-20 mb-4 text-lg font-bold text-white rounded-lg w-56 bg-blue-600 hover:bg-blue-800">Disconnect</button>
       {active && (
         <button onClick={query} className="py-2 mt-20 mb-4 text-lg font-bold text-white rounded-lg w-56 bg-blue-600 hover:bg-blue-800">
@@ -103,7 +103,7 @@ export default function Home() {
         </button>
       )} 
       {/* 新增的Claim按钮，只在钱包连接时显示 */}
-      {active && <button onClick={claim} className="py-2 mt-20 mb-4 text-lg font-bold text-white rounded-lg w-56 bg-blue-600 hover:bg-blue-800">Claim</button>}
+      {active && <button onClick={claim} className="py-2 mt-20 mb-4 text-lg font-bold text-white rounded-lg w-56 bg-blue-600 hover:bg-blue-800">QualClaim</button>}
     </div>
   );
 }

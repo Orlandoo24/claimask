@@ -82,20 +82,20 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 
-	// 定义领奖接口
+	// 定义名额领取接口
 	h.POST("/claim", func(c context.Context, ctx *app.RequestContext) {
 		// 创建参数实例
 		var param ClaimParam
 		// 绑定请求参数到结构体
 		bindErr := ctx.Bind(&param)
-		// 打印参数地址
-		fmt.Printf("Param address: %s\n", param.Address)
-
 		// 如果绑定出错，返回错误信息
 		if bindErr != nil {
 			ctx.String(consts.StatusBadRequest, "bind error: %s", bindErr.Error())
 			return
 		}
+
+		// 打印参数地址
+		fmt.Printf("Param address: %s\n", param.Address)
 
 		// 从 Redis 中获取奖品数量
 		err := ClaimPrize(RD)
