@@ -10,6 +10,7 @@
 
 - Golang
 - Hertz
+- Gin 
 - Redis
 - MySQL
 - Gorm
