@@ -1,24 +1,24 @@
 package main
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/bwmarrin/snowflake"
-	"github.com/hertz-contrib/cors"
-
-	"github.com/cloudwego/hertz/pkg/app"
-	"github.com/cloudwego/hertz/pkg/app/server"
-	"github.com/cloudwego/hertz/pkg/common/utils"
-	"github.com/cloudwego/hertz/pkg/protocol/consts"
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 )
+
+/**
+ *  model 层
+ */
 
 // 定义订单结构体
 type Order struct {
@@ -36,6 +36,10 @@ var (
 	RD *redis.Client
 )
 
+/**
+ *  dao
+ */
+
 // 定义请求参数结构体
 type ClaimParam struct {
 	Address string `json:"address"`
@@ -45,6 +49,10 @@ type ClaimParam struct {
 var globalClaimParam = ClaimParam{}
 
 func main() {
+
+	/***
+	 * 初始化包 initialize
+	 */
 	var err error
 	// 连接 MySQL 数据库
 	DB, err = gorm.Open("mysql", "root:@tcp(127.0.0.1:3306)/faker?charset=utf8mb4&parseTime=True")
@@ -65,92 +73,79 @@ func main() {
 	// 在 Redis 中设置奖品数量
 	RD.Set("prizes", 5, 0)
 
-	// 创建 Hertz 服务器
-	h := server.Default(server.WithHostPorts("127.0.0.1:8870"))
+	// 创建 Gin 服务器
+	r := gin.Default()
 
-	h.Use(cors.New(cors.Config{
-		// 允许跨源访问的 origin 列表
-		AllowOrigins: []string{"*"},
-		// 允许客户端跨源访问所使用的 HTTP 方法列表
-		AllowMethods: []string{"POST", "GET", "PUT", "DELETE", "OPTIONS"},
-		// 允许使用的头信息字段列表
-		AllowHeaders: []string{"Authorization, Content-Length, X-CSRF-Token, Token,session,X_Requested_With,Accept, Origin, Host, Connection, Accept-Encoding, Accept-Language,DNT, X-CustomHeader, Keep-Alive, User-Agent, X-Requested-With, If-Modified-Since, Cache-Control, Content-Type, Pragma"},
-		// 允许暴露给客户端的响应头列表
-		ExposeHeaders: []string{"Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers,Cache-Control,Content-Language,Content-Type,Expires,Last-Modified,Pragma,FooBar"},
-		// 允许客户端请求携带用户凭证
+	/**
+	 * 中间件包
+	 */
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"POST", "GET", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Authorization", "Content-Length", "X-CSRF-Token", "Token", "session", "X_Requested_With", "Accept", "Origin", "Host", "Connection", "Accept-Encoding", "Accept-Language", "DNT", "X-CustomHeader", "Keep-Alive", "User-Agent", "If-Modified-Since", "Cache-Control", "Content-Type", "Pragma"},
+		ExposeHeaders:    []string{"Content-Length", "Access-Control-Allow-Origin", "Access-Control-Allow-Headers", "Cache-Control", "Content-Language", "Content-Type", "Expires", "Last-Modified", "Pragma", "FooBar"},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
 
+	/**
+	 * router 包
+	 */
+
 	// 定义名额领取接口
-	h.POST("/claim", func(c context.Context, ctx *app.RequestContext) {
-		// 创建参数实例
+	r.POST("/claim", func(ctx *gin.Context) {
 		var param ClaimParam
-		// 绑定请求参数到结构体
-		bindErr := ctx.Bind(&param)
-		// 如果绑定出错，返回错误信息
-		if bindErr != nil {
-			ctx.String(consts.StatusBadRequest, "bind error: %s", bindErr.Error())
+		if err := ctx.ShouldBindJSON(&param); err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
-		// 打印参数地址
 		fmt.Printf("Param address: %s\n", param.Address)
 
-		// 从 Redis 中获取奖品数量
-		err := ClaimPrize(RD)
-		if err != nil {
-			// 处理错误，比如返回给客户端错误信息等
-			ctx.String(consts.StatusInternalServerError, "奖品数量减少失败")
+		if err := ClaimPrize(RD); err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "奖品数量减少失败"})
 			return
 		}
 
-		// 创建订单
-		err = CreateOrder(param)
-		if err != nil {
-			// 处理错误，比如返回给客户端错误信息等
-			ctx.String(consts.StatusInternalServerError, "订单创建失败")
+		if err := CreateOrder(param); err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "订单创建失败"})
 			return
 		}
 
-		// 返回成功信息
-		ctx.JSON(consts.StatusOK, utils.H{"param": param})
+		ctx.JSON(http.StatusOK, gin.H{"param": param})
 	})
 
 	// 定义数量查询接口
-	h.GET("/query", func(c context.Context, ctx *app.RequestContext) {
-
-		var prizes int
-		// 从 redis 获取数量
+	r.GET("/query", func(ctx *gin.Context) {
 		prizes, err := RD.Get("prizes").Int()
 		if err != nil {
-			ctx.String(consts.StatusInternalServerError, "无法获取数量")
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "无法获取数量"})
 			return
 		}
 
-		// 返回成功信息
-		ctx.JSON(consts.StatusOK, utils.H{"prizes": prizes})
+		ctx.JSON(http.StatusOK, gin.H{"prizes": prizes})
 	})
 
-	// 新增接口 "/init" 实现奖品数量重置功能
-	h.GET("/init/:quantity", func(c context.Context, ctx *app.RequestContext) {
-		// 从路径参数中获取奖品重置的数量
+	// 新增接口 "/initialize" 实现奖品数量重置功能
+	r.GET("/initialize/:quantity", func(ctx *gin.Context) {
 		quantityStr := ctx.Param("quantity")
 		quantity, err := strconv.Atoi(quantityStr)
 		if err != nil {
-			ctx.String(consts.StatusBadRequest, "无效的数量")
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "无效的数量"})
 			return
 		}
 
-		// 重置奖品数量为指定值
 		RD.Set("prizes", quantity, 0)
-		ctx.String(consts.StatusOK, fmt.Sprintf("奖品数量已重置为 %d", quantity))
+		ctx.String(http.StatusOK, fmt.Sprintf("奖品数量已重置为 %d", quantity))
 	})
 
 	// 启动服务器
-	h.Spin()
-
+	r.Run(":8870")
 }
+
+/**
+ * service 包
+ */
 
 // ClaimPrize 用于领取奖品的函数，传入一个 Redis 客户端 RD，返回可能的错误
 func ClaimPrize(RD *redis.Client) error {
