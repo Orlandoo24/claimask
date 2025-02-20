@@ -24,23 +24,24 @@
 
 #### 效果演示
 
+
 1. 钱包链接
 
-   1. ![Image text](https://github.com/Orlandoo24/claimask/doc/img/image-20240321220345790.png)
+   1. ![Image text](https://github.com/Orlandoo24/claimask/blob/main/doc/img/image-20240321220345790.png)
 
-   2. ![Image text](https://github.com/Orlandoo24/claimask/doc/img/image-20240321220430461.png)
+   2. ![Image text](https://github.com/Orlandoo24/claimask/blob/main/doc/img/image-20240321220430461.png)
 
-   3. ![Image text](https://github.com/Orlandoo24/claimask/doc/img/image-20240321220523373.png) 
+   3. ![Image text](https://github.com/Orlandoo24/claimask/blob/main/doc/img/image-20240321220523373.png) 
 
 2. claim 进行资格领取
 
-   1. ![Image text](https://github.com/Orlandoo24/claimask/doc/img/image-20240321220621749.png)
+   1. ![Image text](https://github.com/Orlandoo24/claimask/blob/main/doc/img/image-20240321220621749.png)
 
 3. 钱包断开
 
-   1. ![Image text](https://github.com/Orlandoo24/claimask/doc/img/image-20240321220644503.png)
+   1. ![Image text](https://github.com/Orlandoo24/claimask/blob/main/doc/img/image-20240321220644503.png)
 
-   2. ![Image text](https://github.com/Orlandoo24/claimask/doc/img/image-20240321220723172.png)
+   2. ![Image text](https://github.com/Orlandoo24/claimask/blob/main/doc/img/image-20240321220723172.png)
 
       
 
