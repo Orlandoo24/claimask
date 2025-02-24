@@ -1,0 +1,3 @@
+name    score
+a       1
+b       2

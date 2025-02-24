@@ -12,117 +12,189 @@ import (
 	"github.com/go-redis/redis"
 )
 
-// OrderService 订单服务接口
+// 定义包级别常量
+const (
+	maxClaimRetries  = 3
+	maxClaimDuration = 5 * time.Second
+	redisKeyPrizes   = "prizes"
+	defaultNodeID    = 1
+)
+
+var (
+	// 定义明确错误类型方便上层处理
+	ErrNoPrizeLeft       = errors.New("no prize left")
+	ErrExceedMaxAttempts = errors.New("exceed max attempts")
+)
+
+// OrderService 定义订单服务接口
 type OrderService interface {
 	ClaimPrize() error
+	ClaimPrizeV2() error
 	CreateOrder(address string) error
 	QueryPrizes() (int, error)
 	InitPrizes(quantity int)
 }
 
-// OrderServiceImpl 订单服务实现
+// OrderServiceImpl 实现订单服务接口
 type OrderServiceImpl struct {
-	OrderDAO OrderDAO
-	RD       *redis.Client
+	orderDAO OrderDAO
+	redisCli *redis.Client
 }
 
-// NewOrderService 创建新的订单服务实例
+// NewOrderService 创建订单服务实例
 func NewOrderService(orderDAO OrderDAO, rd *redis.Client) OrderService {
 	return &OrderServiceImpl{
-		OrderDAO: orderDAO,
-		RD:       rd,
+		orderDAO: orderDAO,
+		redisCli: rd,
 	}
 }
 
-// ClaimPrize 用于领取奖品的函数，传入一个 Redis 客户端 RD，返回可能的错误
+// ClaimPrize 领取奖品（带事务重试机制）
+// 实现原理：
+// 1. 使用Redis Watch实现乐观锁控制
+// 2. 采用有限次数的重试机制处理事务冲突
+// 3. 设置总操作超时时间防止长时间阻塞
+// 返回值：
+//   - 成功时返回nil
+//   - ErrNoPrizeLeft 奖品已领完
+//   - ErrExceedMaxAttempts 超过最大尝试次数
 func (s *OrderServiceImpl) ClaimPrize() error {
-	var prizes int                 // 声明奖品数量变量
-	maxRetries := 3                // 最大重试次数
-	maxDuration := 5 * time.Second // 最大执行时间限制，假设为5秒
+	startTime := time.Now()
 
-	retries := 0        // 初始化重试次数为0
-	start := time.Now() // 记录开始时间
-
-	for {
-		err := s.RD.Watch(func(tx *redis.Tx) error {
-			var err error
-
-			// 从 Redis 中获取奖品数量
-			prizes, err = tx.Get("prizes").Int()
-			if err != nil {
-				return err
-			}
-
-			// 如果奖品数量大于 0，则递减奖品数量
-			if prizes > 0 {
-				_, err = tx.Pipelined(func(pipe redis.Pipeliner) error {
-					// 在 Redis 中递减奖品数量
-					pipe.Decr("prizes")
-					return nil
-				})
-				if err != nil {
-					return err
-				}
-				return nil
-			}
-			return errors.New("奖品已经领完了") // 如果奖品数量为0，则返回错误信息
-		}, "prizes")
-
-		if err == nil {
-			// 如果没有错误，表示奖品数量获取和递减成功，跳出循环
-			break
-		} else if err == redis.TxFailedErr {
-			fmt.Print("当前有其他事务对 prizes 键进行了修改，事务回滚，并进行重试")
-
-			// 如果出现 redis.TxFailedErr 错误，表示事务失败，需要重试
-			retries++
-			if retries >= maxRetries || time.Since(start) >= maxDuration {
-				// 如果达到最大重试次数或者超过最大时间限制，退出循环并返回错误信息
-				return errors.New("重试次数超过限制或执行时间超时")
-			}
-			continue // Retry
-		} else {
-			// 如果出现其他错误，返回给客户端错误信息，并结束处理
-			return err
+	// 有限重试循环（避免无限重试导致系统阻塞）
+	for retry := 0; retry < maxClaimRetries; retry++ {
+		// 超时检查：总操作时间超过最大允许时长则立即终止
+		if time.Since(startTime) > maxClaimDuration {
+			return fmt.Errorf("operation timeout: %w", ErrExceedMaxAttempts)
 		}
+
+		// 开启Redis事务监控
+		err := s.redisCli.Watch(func(tx *redis.Tx) error {
+			// --- 事务开始 ---
+			// 原子化操作步骤：
+			// 1. 获取当前奖品数量
+			// 2. 检查库存有效性
+			// 3. 执行库存递减
+
+			// 步骤1：获取当前奖品数量
+			prizeCount, err := tx.Get(redisKeyPrizes).Int()
+			if err != nil && err != redis.Nil { // 处理非"key不存在"的其他错误
+				return fmt.Errorf("get prize count failed: %w", err)
+			}
+
+			// 步骤2：库存检查
+			// 当库存<=0时返回特定错误，终止事务流程
+			if prizeCount <= 0 {
+				return ErrNoPrizeLeft
+			}
+
+			// 步骤3：执行库存递减操作
+			// 使用管道提升事务执行效率（单次网络往返）
+			_, err = tx.TxPipelined(func(pipe redis.Pipeliner) error {
+				pipe.Decr(redisKeyPrizes)
+				return nil
+			})
+			return err
+		}, redisKeyPrizes) // 监控prizes键的变化
+
+		// --- 事务处理结果分析 ---
+		switch {
+		case err == nil:
+			// 成功情况：事务执行成功，直接返回
+			return nil
+		case errors.Is(err, ErrNoPrizeLeft):
+			// 业务终止情况：明确无库存，直接向上返回错误
+			return err
+		case errors.Is(err, redis.TxFailedErr):
+			// 事务冲突情况：记录日志并继续重试
+			log.Printf("transaction conflict detected, retry count: %d/%d",
+				retry+1, maxClaimRetries)
+			continue
+		default:
+			// 不可恢复错误：包装错误信息后返回
+			return fmt.Errorf("unexpected error: %w", err)
+		}
+	}
+
+	// 重试耗尽：返回明确的尝试次数超限错误
+	return ErrExceedMaxAttempts
+}
+
+// ClaimPrizeV2 领取奖品（利用 Redis 的单线程特性保证数据一致性）
+// 实现原理：
+// 1. 使用 Redis 的原子操作 DECR 保证库存递减的原子性。
+// 2. 在 DECR 之前检查库存，避免超卖。
+// 返回值：
+//   - 成功时返回 nil
+//   - ErrNoPrizeLeft 奖品已领完
+func (s *OrderServiceImpl) ClaimPrizeV2() error {
+	// 获取当前库存
+	prizeCount, err := s.redisCli.Get(redisKeyPrizes).Int()
+	if err != nil && err != redis.Nil { // 处理非"key不存在"的其他错误
+		return fmt.Errorf("get prize count failed: %w", err)
+	}
+
+	// 检查库存
+	if prizeCount <= 0 {
+		return ErrNoPrizeLeft
+	}
+
+	// 执行库存递减操作（原子操作）
+	newCount, err := s.redisCli.Decr(redisKeyPrizes).Result()
+	if err != nil {
+		return fmt.Errorf("decr prize count failed: %w", err)
+	}
+	// 再次检查库存，避免超卖
+	if newCount < 0 {
+		// 如果库存减为负数，回滚操作
+		_, _ = s.redisCli.Incr(redisKeyPrizes).Result()
+		return ErrNoPrizeLeft
 	}
 	return nil
 }
 
 // CreateOrder 创建订单
 func (s *OrderServiceImpl) CreateOrder(address string) error {
+	orderID, err := generateOrderID()
+	if err != nil {
+		return fmt.Errorf("generate order id failed: %w", err)
+	}
+
 	order := &model.Order{
-		OrderID:    generateOrderID(),
+		OrderID:    orderID,
 		Address:    address,
-		Json:       `{"key": "value"}`,
+		Json:       `{"key": "value"}`, // 建议改为配置项或参数传入
 		InsertTime: time.Now(),
 		UpdateTime: time.Now(),
 	}
 
-	return s.OrderDAO.CreateOrder(order)
-}
-
-// generateOrderID 生成分布式ID
-func generateOrderID() uint64 {
-	// 创建一个新的节点（Node），用于生成雪花ID
-	node, err := snowflake.NewNode(1)
-	if err != nil {
-		log.Fatalf("无法创建雪花节点: %v", err)
+	if err := s.orderDAO.CreateOrder(order); err != nil {
+		return fmt.Errorf("create order failed: %w", err)
 	}
-
-	// 生成一个新的雪花ID
-	id := node.Generate()
-
-	// 将 int64 类型的 ID 转换为 uint64 类型
-	return uint64(id.Int64())
+	return nil
 }
 
-// QueryPrizes 查询奖品数量
+// generateOrderID 生成分布式唯一ID
+func generateOrderID() (uint64, error) {
+	node, err := snowflake.NewNode(defaultNodeID)
+	if err != nil {
+		return 0, fmt.Errorf("create snowflake node failed: %w", err)
+	}
+	return uint64(node.Generate().Int64()), nil
+}
+
+// QueryPrizes 查询当前奖品数量
 func (s *OrderServiceImpl) QueryPrizes() (int, error) {
-	return s.RD.Get("prizes").Int()
+	count, err := s.redisCli.Get(redisKeyPrizes).Int()
+	if err != nil && err != redis.Nil {
+		return 0, fmt.Errorf("query prizes failed: %w", err)
+	}
+	return count, nil
 }
 
 // InitPrizes 初始化奖品数量
 func (s *OrderServiceImpl) InitPrizes(quantity int) {
-	s.RD.Set("prizes", quantity, 0)
+	if _, err := s.redisCli.Set(redisKeyPrizes, quantity, 0).Result(); err != nil {
+		log.Printf("init prizes failed: %v", err)
+	}
 }
