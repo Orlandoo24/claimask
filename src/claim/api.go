@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// ClaimAPI 领取核心服务
 type ClaimAPI struct {
 	OrderService OrderService
 }
