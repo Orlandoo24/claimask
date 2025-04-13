@@ -1,4 +1,3 @@
-
 # Claimask
 
 ## 介绍
@@ -76,16 +75,16 @@ Claimask 采用前后端分离架构，后端基于 Go 语言微服务设计，�
 ## 效果演示
 
 1. 钱包链接
-   1. ![钱包连接界面](https://github.com/Orlandoo24/claimask/pkg/claimask-ui/doc/img/image-20240321220345790.png)
-   2. ![钱包选择界面](https://github.com/Orlandoo24/claimask/pkg/claimask-ui/doc/img/doc/img/image-20240321220430461.png)
-   3. ![连接成功界面](https://github.com/Orlandoo24/claimask/pkg/claimask-ui/doc/img/img/image-20240321220523373.png)
+   1. ![钱包连接界面](https://github.com/Orlandoo24/claimask/blob/main/pkg/claimask-ui/doc/img/image-20240321220345790.png)
+   2. ![钱包选择界面](https://github.com/Orlandoo24/claimask/blob/main/pkg/claimask-ui/doc/img/image-20240321220430461.png)
+   3. ![连接成功界面](https://github.com/Orlandoo24/claimask/blob/main/pkg/claimask-ui/doc/img/image-20240321220523373.png)
 
 2. Claim 资格领取
-   1. ![Claim界面](https://github.com/Orlandoo24/claimask/pkg/claimask-ui/doc/img/image-20240321220621749.png)
+   1. ![Claim界面](https://github.com/Orlandoo24/claimask/blob/main/pkg/claimask-ui/doc/img/image-20240321220621749.png)
 
 3. 钱包断开
-   1. ![断开提示](https://github.com/Orlandoo24/claimask/pkg/claimask-ui/doc/img/image-20240321220644503.png)
-   2. ![断开后界面](https://github.com/Orlandoo24/claimask/pkg/claimask-ui/doc/img/image-20240321220723172.png)
+   1. ![断开提示](https://github.com/Orlandoo24/claimask/blob/main/pkg/claimask-ui/doc/img/image-20240321220644503.png)
+   2. ![断开后界面](https://github.com/Orlandoo24/claimask/blob/main/pkg/claimask-ui/doc/img/image-20240321220723172.png)
 
 ## 关键流程
 
