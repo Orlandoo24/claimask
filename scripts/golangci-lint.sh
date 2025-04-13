@@ -3,7 +3,7 @@
 # 功能：收集Go项目编译错误和静态检查结果
 
 # 目标输出文件路径
-OUTPUT_FILE="/Users/123jiaru/Desktop/project/my/astro/astro-rebuild/alpha/astro-orderx/lint_results.txt"
+OUTPUT_FILE="/Users/123jiaru/Desktop/project/my/claimask/scripts/code"
 
 # 进入项目根目录
 cd /Users/123jiaru/Desktop/project/my/astro/astro-rebuild/alpha/astro-orderx || {

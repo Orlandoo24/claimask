@@ -11,6 +11,121 @@
 Claimask 采用前后端分离架构，后端基于 Go 语言微服务设计，前端使用 React 构建交互界面。
 
 ```
+claimask
+├── README.md
+├── SECURITY.md
+├── claimask_app
+├── comm
+│   ├── constant
+│   │   ├── blockchain.go
+│   │   └── constant.go
+│   ├── errno
+│   │   ├── erron.go
+│   │   ├── error.go
+│   │   └── error_code.go
+│   ├── initialize
+│   │   ├── init.go
+│   │   ├── mysql.go
+│   │   ├── redis.go
+│   │   └── rpc.go
+│   ├── middleware
+│   │   └── middleware.go
+│   ├── response
+│   │   └── response.go
+│   └── utils
+│       ├── convert.go
+│       ├── logger.go
+│       └── nft_decoder.go
+├── conf
+│   ├── config.go
+│   └── config.yaml
+├── go.mod
+├── go.sum
+├── go.work
+├── go.work.sum
+├── internal
+│   ├── claimask
+│   │   ├── api
+│   │   │   ├── handler.go
+│   │   │   └── router.go
+│   │   ├── dao
+│   │   │   └── order_dao.go
+│   │   ├── model
+│   │   │   ├── dto
+│   │   │   └── po
+│   │   └── service
+│   │       └── claim_service.go
+│   └── monitor
+│       ├── api
+│       │   ├── handler.go
+│       │   └── router.go
+│       ├── dao
+│       │   ├── nft_dao.go
+│       │   └── utxo_dao.go
+│       ├── model
+│       │   ├── dto
+│       │   └── po
+│       └── service
+│           ├── monitor_service.go
+│           ├── nft_service.go
+│           ├── queue_mgr.go
+│           └── tx_monitor.go
+├── main.go
+├── orderx-README.md
+├── pkg
+│   ├── claimask-ui
+│   │   ├── README.md
+│   │   ├── components
+│   │   │   └── wallet
+│   │   ├── doc
+│   │   │   └── img
+│   │   ├── next.config.js
+│   │   ├── package-lock.json
+│   │   ├── package.json
+│   │   ├── pages
+│   │   │   ├── _app.js
+│   │   │   ├── api
+│   │   │   └── index.js
+│   │   ├── postcss.config.js
+│   │   ├── public
+│   │   │   ├── favicon.ico
+│   │   │   └── vercel.svg
+│   │   ├── styles
+│   │   │   ├── Home.module.css
+│   │   │   └── globals.css
+│   │   ├── tailwind.config.js
+│   │   └── yarn.lock
+│   ├── dogechain
+│   │   ├── rpc_client.go
+│   │   └── tx_builder.go
+│   ├── origin
+│   │   └── main.go
+│   └── queues
+│       ├── priority_queue.go
+│       ├── slowSpeedQueue.go
+│       └── speed_controller.go
+├── scripts
+│   ├── dev.sh
+│   ├── go_collect.py
+│   ├── go_project_code.txt
+│   ├── golangci-lint.sh
+│   ├── js_code.sh
+│   ├── js_project_code.txt
+│   └── lint_results.txt
+├── slowSpeed_js
+│   ├── slowSpeedBox.js
+│   └── slowSpeedQueue.js
+├── sql
+│   └── init.sql
+└── test
+```
+
+
+
+```
+
+
+
 ┌───────────────┐     ┌─────────────────────────────────┐     ┌────────────────┐
 │               │     │           Backend Services       │     │                │
 │  Web Frontend │────▶│                                 │◀───▶│  External APIs │
