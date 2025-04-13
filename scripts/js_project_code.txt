@@ -1,0 +1,2367 @@
+=== JAVASCRIPT PROJECT STRUCTURE ===
+.
+├── apiServer.js
+├── cookie
+├── js_code.txt
+├── js_project_code.py
+├── monitor
+│   ├── decodeElon.js
+│   └── monitorPay.js
+├── monitorServer.js
+├── nftMsg
+├── nftMsg.txt
+├── operation
+│   └── operation.js
+├── package-lock.json
+├── package.json
+├── rpc
+│   └── initRpc.js
+├── run.js
+├── slowSpeed
+│   ├── slowSpeedBox.js
+│   └── slowSpeedQueue.js
+├── static
+│   ├── 6521252bc9afc691d748050a9768400a576c46c96fc6a77b1ce86b7908657460i0.webp
+│   ├── a48c8103538a765f449a333236be134.jpg
+│   ├── aspower.jpg
+│   ├── az.jpg
+│   ├── guagua.webp
+│   ├── lQjPJwzWwwzObKoAALB4ds9YNjNCOASuH67NgJoA.file
+│   ├── powerDoge.avif
+│   ├── powerDoge.jpeg
+│   ├── powerDoge1.jpeg
+│   ├── powerDoge10.jpeg
+│   ├── powerDoge11.jpeg
+│   ├── powerDoge12.jpeg
+│   ├── powerDoge2.jpeg
+│   ├── powerDoge3.jpeg
+│   ├── powerDoge4.jpeg
+│   ├── powerDoge5.jpeg
+│   ├── powerDoge6.jpeg
+│   ├── powerDoge6.jpg
+│   ├── powerDoge7.jpeg
+│   ├── powerDoge8.jpeg
+│   ├── powerDoge9.jpeg
+│   ├── test.jpeg
+│   ├── test.webp
+│   ├── test1.jpeg
+│   └── test_smool.jpeg
+├── test
+│   ├── chooseAddress.js
+│   ├── collection.js
+│   ├── createWallet.js
+│   ├── frontback.js
+│   ├── initOutWallet.js
+│   ├── main.js
+│   ├── multransfer.js
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── rebuildWallet.js
+│   ├── wallets.txt
+│   ├── wallets_teston.txt
+│   ├── worker.js
+│   └── 备份
+│       ├── 1
+│       ├── 2
+│       └── 3
+└── tool
+    ├── logger.js
+    └── tool.js
+
+12 directories, 56 files
+
+
+
+// ====== FILE: ./run.js ======
+
+   1 | const Operation=require("./operation/operation.js")
+   2 | const operation =new Operation();
+   3 | const Doginals = require("./monitor/decodeElon.js")
+   4 | const doginals = new Doginals()
+   5 | const MonitorPay = require("./monitor/monitorPay.js")
+   6 | const Rpc = require("./rpc/initRpc.js")
+   7 | const rpc = new Rpc("94.130.49.158",22555,"powerDoge","powerDoge","__cookie__:d11f6187560b753e272c998707c09e4a9deeee95097bb98dc81c61f6cb256be0");
+   8 | const axios = require('axios');
+   9 | const fs = require('fs').promises;
+  10 | const cheerio = require('cheerio');
+  11 | const Tool = require("./tool/tool.js")
+  12 | const tool = new Tool;
+  13 | 
+  14 | function sleep(ms) {
+  15 |   return new Promise(resolve => setTimeout(resolve, ms));
+  16 | }
+  17 | 
+  18 | const monitorPay = new MonitorPay("DFwzRnAHXsDHtekYHRi2NQp8aj9qqzddqP")
+  19 | 
+  20 | const baseurl="http://103.146.158.10:8088/"
+  21 | const monitorUrl="https://wonky-ord.dogeord.io/"
+  22 | 
+  23 | const getshibescription=async (hash)=>{
+  24 | 
+  25 |     try{
+  26 |           let gtid
+  27 |           const respon = await axios.get(`${monitorUrl}output/${hash}:0`)
+  28 |           if(respon.status != 200) throw new Error("init error")
+  29 |           const $ = cheerio.load(respon.data);
+  30 |           const addressElement = $('dd.thumbnails a').eq(0);
+  31 |           if (addressElement) {
+  32 |               gtid = addressElement.attr('href').split("/")[2].slice(0, -2);
+  33 |           }
+  34 |           if(gtid==undefined) return null
+  35 |           return gtid
+  36 | 
+  37 | 
+  38 |     }catch(error)
+  39 |     {
+  40 |       if(error.response.status==404) return false;
+  41 |       throw new Error(error.message)
+  42 |     }
+  43 | 
+  44 | 
+  45 |   }
+  46 | 
+  47 | 
+  48 | const main=async ()=>{
+  49 | 
+  50 |     // await getshibescriptison("d8cc3bcefb149ecd6b8b5a564581379e88bc3e349b778b8e02dcca37e762dd3b")
+  51 |     // const res = await rpc.rpcRequest("getinfo")
+  52 |     // console.log(res)
+  53 |     
+  54 | 
+  55 |     // operation.tersferElon('DH4g9Btat2csxaQ8AKrSsbVejXCFoSHahv', "QTtYiy5aV7jY5CvSxUxZKqhqtoJYqJG5XwFbyrayXxpad1xKtsMY", "DNsKwvbMVQ3L86HzRJa4a5nhV1RYmTpnZt", "0f01281592c5213c60550edbdc2b1423527569bf575be45113eae301b68552cd")
+  56 |   const orderId=1719667507208712194
+  57 |   console.log(orderId)
+  58 |   const response={
+  59 |   orderId: '1719690935580864514',
+  60 |   address: 'DAfZzZZtVJo7T4UWXPqaCsR4wkfheV9JvN',
+  61 |   reward: '0.1'
+  62 | }
+  63 | 
+  64 | console.log(response)
+  65 |       const headers={
+  66 |         'Content-Type': 'application/json', // 设置请求头，指定内容类型为JSON
+  67 |       }
+  68 | 
+  69 |       const claimCheck = await axios.post(`http://192.168.2.58:8089/rich/claimCheck`,response,{headers});
+  70 |           console.log(claimCheck["data"])
+  71 | 
+  72 |           console.log("???")
+  73 |     // console.log(167.08,tool.fromDogetoElon(167.08))
+  74 |     // await operation.getAddressValidUtxo("DRbLKboLDM2wsWvsHW7GFpWiZ5Nrt9uEUf")
+  75 | 
+  76 |   
+  77 |   // const api = await rpc.getTx_Api("d8cc3bcefb149ecd6b8b5a564581379e88bc3e349b778b8e02dcca37e762dd3b")
+  78 |   // const Rpc = await rpc.getTx_Rpc("d8cc3bcefb149ecd6b8b5a564581379e88bc3e349b778b8e02dcca37e762dd3b")
+  79 | 
+  80 | 
+  81 |   // console.log(Rpc)
+  82 | 
+  83 |     // const params = {
+  84 |     //     txId: "8a4754b72a89295999dacc53f31a1dcd9ea40ac907aa9ea2b091b7c9310e0cfc"
+  85 |     // };
+  86 |     // // 使用Axios发送GET请求
+  87 | 
+  88 |     //   const res = await axios.get('http://103.146.158.10:8088/astro/payCheck', {params})
+  89 |     //   console.log(res.data)
+  90 | 
+  91 | 
+  92 |   // monitorPay.runMonitor();
+  93 | 
+  94 | // operation.tersfer("DHjtuw8sf73vifMtfDs4a1XdwAM98thmwW","QTwpkPD41frZN2gWiikdEoiMTaBjHd2BymrxjwAykRQmg9csS1ni","DFwzRnAHXsDHtekYHRi2NQp8aj9qqzddqP",10)
+  95 | 
+  96 | 
+  97 |    
+  98 | 
+  99 |   
+ 100 |   
+ 101 | }
+ 102 | 
+ 103 | main()
+ 104 | 
+ 105 | 
+ 106 | 
+
+
+
+// ====== FILE: ./apiServer.js ======
+
+   1 | const Operation = require("./operation/operation.js")
+   2 | const logger = require('./tool/logger.js');
+   3 | require('dotenv').config(); // 加载 .env 文件中的环境变量
+   4 | const operation = new Operation();
+   5 | const express = require('express');
+   6 | const app = express();
+   7 | const SHA256 = require('crypto-js/sha256');
+   8 | const port = 3000;
+   9 | const MonitorPay = require("./monitor/monitorPay.js")
+  10 | const axios = require("axios")
+  11 | const salt = process.env.salt
+  12 | const whiteList = [
+  13 |   "35.72.149.104",
+  14 |   "122.233.176.85",
+  15 |   "115.200.237.77",
+  16 |   "103.146.158.10",
+  17 |   "144.76.96.249",
+  18 |   "115.198.207.169"
+  19 | ]
+  20 | const payAddress = process.env.payAddress
+  21 | const payPrivateKey = process.env.payPrivateKey
+  22 | const monitorPay = new MonitorPay(process.env.monitorAddress)
+  23 | const serverClaimUrl = process.env.serverClaimUrl
+  24 | const SlowSpeedBoxOG = require("./slowSpeed/slowSpeedBox.js")
+  25 | const SlowSpeedBox = new SlowSpeedBoxOG(operation.tersferMul, payAddress, payPrivateKey);
+  26 | process.on('uncaughtException', (error) => {
+  27 |   logger.error('全局异常捕获:', error.message);
+  28 |   // 这里可以添加全局异常处理逻辑，例如记录日志或关闭服务器
+  29 | });
+  30 | 
+  31 | 
+  32 | function sleep(ms) {
+  33 |   return new Promise(resolve => setTimeout(resolve, ms));
+  34 | }
+  35 | 
+  36 | 
+  37 | const getClientIPv4 = (req) => {
+  38 |   const ipAddress = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress || '';
+  39 |   // 如果有多个IP地址，X-Forwarded-For是一个以逗号分隔的列表，取第一个非内部的IPv4地址
+  40 |   const ipRec = ipAddress.split(',')[0].trim();
+  41 |   const ipv4 = ipRec.startsWith('::ffff:') ? ipRec.split(':').pop() : ipRec;;
+  42 |   return ipv4;
+  43 | };
+  44 | 
+  45 | 
+  46 | const checkIp = async (req, res, next) => {
+  47 |   const ip = getClientIPv4(req);
+  48 |   if (whiteList.indexOf(ip) == -1) return res.status(403).send('Forbidden');
+  49 |   next();
+  50 | }
+  51 | 
+  52 | 
+  53 | async function transferMint(address, pricateKey, to, utxo) {
+  54 |   // await operation.tersferElon(from,privateKey,to,utxo)
+  55 |   try {
+  56 |     const utxoMsg = await operation.getAddressValidUtxo(address)
+  57 |     const hash = await operation.tersferElonUseUtxo(address, pricateKey, to, utxo, utxoMsg[0], utxoMsg[1], utxoMsg[2])
+  58 |     return hash
+  59 |   } catch (error) {
+  60 |     logger.log("transferMint error", error.message)
+  61 |   }
+  62 | 
+  63 | }
+  64 | 
+  65 | 
+  66 | 
+  67 | app.use(express.json());
+  68 | 
+  69 | // app.use(checkIp)
+  70 | 
+  71 | 
+  72 | 
+  73 | const main = async () => {
+  74 | 
+  75 |   app.post('/claim', async (req, res) => {
+  76 |     try {
+  77 |       const address = req.body.address || 'Guest';
+  78 |       const amount = req.body.amount || 'Guest'
+  79 |       const orderId = req.body.orderId || 'Guest'
+  80 |       const sha = req.body.sha || 'Guest'
+  81 | 
+  82 |       if (address == "Guest" || amount == "Guest" || sha == "Guest" || orderId == "Guest") return res.status(406).send('Bad Request');
+  83 |       const json_sha = {
+  84 |         amount: amount,
+  85 |         address: address,
+  86 |         orderId: orderId
+  87 |       }
+  88 |       const json_sha_str = JSON.stringify(json_sha)
+  89 |       const json_sha_salt_str = json_sha_str + salt;
+  90 |       const hash = SHA256(json_sha_salt_str).toString();
+  91 | 
+  92 |       if (sha != hash) return res.status(401).send('Unauthorized');
+  93 | 
+  94 |       console.log("收到claim请求，地址为：", address, "数量为：", amount)
+  95 | 
+  96 |       const response = {
+  97 |         orderId: orderId,
+  98 |         address: address,
+  99 |         amount: amount
+ 100 |       }
+ 101 | 
+ 102 |       const requestBody = {
+ 103 |         "orderId": orderId,
+ 104 |         "address": address,
+ 105 |         "reward": amount.toString()
+ 106 |       }
+ 107 | 
+ 108 |       // const headers={
+ 109 |       //   'Content-Type': 'application/json', // 设置请求头，指定内容类型为JSON
+ 110 |       // }
+ 111 | 
+ 112 |       // try{
+ 113 | 
+ 114 |       //     const claimCheck = await axios.post(`${serverClaimUrl}rich/claimCheck`,requestBody);
+ 115 |       //     console.log(claimCheck["data"])
+ 116 |       //     if(claimCheck["data"]["code"]==5001||claimCheck["data"]["code"]==5002)
+ 117 |       //     {
+ 118 |       //       response["errorMsg"]=claimCheck["data"]["message"]
+ 119 |       //       return res.status(400).send(response);
+ 120 |       //     }
+ 121 |       // }catch(error)
+ 122 |       // {
+ 123 |       //   response["errorMsg"]=`${orderId} 该订单claimCheck报错${error.message}`;
+ 124 |       //   logger.log("claim claimCheck Error",`${orderId} 该订单claimCheck报错${error.message}`)
+ 125 |       //   return res.status(410).send(response);
+ 126 | 
+ 127 |       // }
+ 128 | 
+ 129 | 
+ 130 |       try {
+ 131 |         const pushStatus = await SlowSpeedBox.enqueue(response)
+ 132 |         if (pushStatus == false) {
+ 133 |           response["errorMsg"] = `${orderId} 该订单请求不合法`;
+ 134 |           logger.log("claim address queue fail", `${orderId} 该订单请求不合法`)
+ 135 |           return res.status(400).send(response);
+ 136 |         }
+ 137 |       } catch (error) {
+ 138 |         response["errorMsg"] = `${orderId} Error,${error.message}`;
+ 139 |         logger.log("claim address queue Error", `${orderId} Error,${error.message}`)
+ 140 |         return res.status(400).send(response);
+ 141 |       }
+ 142 | 
+ 143 |       response["successMsg"] = `${address}地址已加入领取队列`;
+ 144 |       logger.log(`${address}地址已加入领取队列`)
+ 145 |       res.send(response);
+ 146 |     } catch (error) {
+ 147 |       logger.log("claim Error", error.message)
+ 148 |       return res.status(500).send(error.message);
+ 149 |     }
+ 150 |   });
+ 151 | 
+ 152 |   app.post('/resendNft', async (req, res) => {
+ 153 |     try {
+ 154 | 
+ 155 | 
+ 156 |       const orderId = req.body.orderId || 'Guest';
+ 157 |       const from = req.body.from || 'Guest'
+ 158 |       const nftUtxo = req.body.nftUtxo || 'Guest'
+ 159 |       const toAddress = req.body.toAddress || 'Guest'
+ 160 |       const sha = req.body.sha || 'Guest'
+ 161 |       if (orderId == "Guest" || from == "Guest" || nftUtxo == "Guest" || toAddress == "Guest" || sha == "Guest") return res.status(406).send('Bad Request');
+ 162 | 
+ 163 | 
+ 164 | 
+ 165 |       const json_sha = {
+ 166 |         orderId: orderId,
+ 167 |         from: from,
+ 168 |         nftUtxo: nftUtxo,
+ 169 |         toAddress: toAddress,
+ 170 |         sha: sha
+ 171 |       }
+ 172 |       const json_sha_str = JSON.stringify(json_sha)
+ 173 |       const json_sha_salt_str = json_sha_str + salt;
+ 174 |       const hash = SHA256(json_sha_salt_str).toString();
+ 175 | 
+ 176 |       if (sha != hash) return res.status(401).send('Unauthorized');
+ 177 | 
+ 178 |       console.log("收到resend_nft请求，地址为：", toAddress, "nft位置为：", nftUtxo)
+ 179 | 
+ 180 | 
+ 181 |       const response = {
+ 182 |         orderId: orderId,
+ 183 |         from: from,
+ 184 |         nftUtxo: nftUtxo,
+ 185 |         toAddress: toAddress,
+ 186 |         sha: sha
+ 187 |       }
+ 188 | 
+ 189 |       const requestBody = {
+ 190 |         orderId: orderId,
+ 191 |         from: from,
+ 192 |         nftUtxo: nftUtxo,
+ 193 |         toAddress: toAddress,
+ 194 |         sha: sha
+ 195 |       }
+ 196 | 
+ 197 |       // const headers={
+ 198 |       //   'Content-Type': 'application/json', // 设置请求头，指定内容类型为JSON
+ 199 |       // }
+ 200 | 
+ 201 |       // try{
+ 202 | 
+ 203 |       //     const claimCheck = await axios.post(`${serverClaimUrl}rich/claimCheck`,requestBody);
+ 204 |       //     console.log(claimCheck["data"])
+ 205 |       //     if(claimCheck["data"]["code"]==5001||claimCheck["data"]["code"]==5002)
+ 206 |       //     {
+ 207 |       //       response["errorMsg"]=claimCheck["data"]["message"]
+ 208 |       //       return res.status(400).send(response);
+ 209 |       //     }
+ 210 |       // }catch(error)
+ 211 |       // {
+ 212 |       //   response["errorMsg"]=`${orderId} 该订单claimCheck报错${error.message}`;
+ 213 |       //   logger.log("claim claimCheck Error",`${orderId} 该订单claimCheck报错${error.message}`)
+ 214 |       //   return res.status(410).send(response);
+ 215 | 
+ 216 |       // }
+ 217 | 
+ 218 | 
+ 219 |       try {
+ 220 |         let privateKey
+ 221 |         let ownerIndex = -1
+ 222 |         for (let wallet of wallets) {
+ 223 |           if (wallet["recive"] == from) {
+ 224 |             privateKey = wallet["recivePrivateKey"]
+ 225 |             ownerIndex = wallet["group"] - 1;
+ 226 |             break;
+ 227 |           }
+ 228 |         }
+ 229 |         if (ownerIndex < 0) {
+ 230 |           response["errorMsg"] = `${orderId} this orderId resend_nft Error,from is not in our wallet`;
+ 231 |           logger.log("resend_nft Error", `${orderId}this orderId resend_nft Error,from is not in our wallet`)
+ 232 |           return res.status(400).send(response);
+ 233 |         }
+ 234 |         const txid = await transferMint(from, privateKey, toAddress, nftUtxo);
+ 235 |         response["txid"] = txid;
+ 236 |       } catch (error) {
+ 237 |         response["errorMsg"] = `${orderId} this resend orderId Error,${error.message}`;
+ 238 |         logger.log("resend buildTx Error", `${orderId} this resend orderId Error,${error.message}`)
+ 239 |         return res.status(400).send(response);
+ 240 |       }
+ 241 | 
+ 242 |       response["successMsg"] = `${toAddress}地址已成功补发`;
+ 243 |       logger.log(`${toAddress}地址已成功补发`)
+ 244 |       res.send(response);
+ 245 |     } catch (error) {
+ 246 |       logger.log("resendNft Error", error.message)
+ 247 |       return res.status(500).send(error.message);
+ 248 |     }
+ 249 |   });
+ 250 | 
+ 251 |   app.listen(port, () => {
+ 252 |     logger.log(`Server running at http://localhost:${port}/`);
+ 253 |   });
+ 254 | 
+ 255 | }
+ 256 | main();
+
+
+// ====== FILE: ./package.json ======
+
+   1 | {
+   2 |   "dependencies": {
+   3 |     "axios": "^1.4.0",
+   4 |     "bignumber.js": "^9.1.1",
+   5 |     "bitcoin-core": "^4.1.0",
+   6 |     "bitcoinjs-lib": "^4.0.5",
+   7 |     "bitcore-lib-doge": "^8.25.46",
+   8 |     "cheerio": "^1.0.0-rc.12",
+   9 |     "cloudscraper": "^4.6.0",
+  10 |     "crypto-js": "^4.1.1",
+  11 |     "dotenv": "^16.3.1",
+  12 |     "express": "^4.18.2",
+  13 |     "hooman": "^1.2.6",
+  14 |     "ip": "^1.1.8",
+  15 |     "mysql2": "^3.6.0",
+  16 |     "request": "^2.88.2",
+  17 |     "secp256k1": "^5.0.0",
+  18 |     "ws": "^8.13.0",
+  19 |     "xlsx": "^0.18.5"
+  20 |   }
+  21 | }
+
+
+
+// ====== FILE: ./monitorServer.js ======
+
+   1 | const logger = require('./tool/logger.js');
+   2 | require('dotenv').config(); // 加载 .env 文件中的环境变量
+   3 | const MonitorPay = require("./monitor/monitorPay.js")
+   4 | const monitorPay = new MonitorPay(process.env.monitorAddress)
+   5 | process.on('uncaughtException', (error) => {
+   6 |       logger.error('全局异常捕获:', error.message);
+   7 |       // 这里可以添加全局异常处理逻辑，例如记录日志或关闭服务器
+   8 | });
+   9 | 
+  10 | 
+  11 | const main = async ()=>{
+  12 | 
+  13 |   try{
+  14 |   	  monitorPay.runMonitor();
+  15 |   }catch(error)
+  16 |   {
+  17 |   	  logger.error("monitorServer Error",error.message)
+  18 |   }
+  19 | 
+  20 |   
+  21 | }
+  22 | main();
+
+
+// ====== FILE: ./operation/operation.js ======
+
+   1 | const bitcoin = require('bitcoinjs-lib');
+   2 | const Doginals = require("../monitor/decodeElon.js")
+   3 | const Rpc = require("../rpc/initRpc.js")
+   4 | const Tools = require("../tool/tool.js")
+   5 | const axios = require("axios")
+   6 | const logger = require('../tool/logger.js');
+   7 | const tool = new Tools
+   8 | const doginals = new Doginals();
+   9 | require('dotenv').config(); // 加载 .env 文件中的环境变量
+  10 | const rpc = new Rpc(process.env.rpcip,process.env.rpcport,process.env.rpcuser,process.env.rpcpassword,process.env.rpccookie);
+  11 | const baseUrl=process.env.serverUrl
+  12 | 
+  13 | class operation{
+  14 | 	constructor(){
+  15 | 	}
+  16 | 
+  17 | 	async updateAddressValidUtxo(address,value,utxo,index){
+  18 | 		const data={
+  19 |     	"address": address,
+  20 |     	"value": value.toString(),
+  21 |     	"utxo": utxo,
+  22 |     	"index":index
+  23 | 		}	
+  24 | 
+  25 |   		const headers={
+  26 |   		  'Content-Type': 'application/json', // 设置请求头，指定内容类型为JSON
+  27 |   		}
+  28 |   		try{
+  29 |   			const response=await axios.post(baseUrl+"astro/updateAddressValidUtxo",data,{
+  30 | 				headers
+  31 | 			})
+  32 |   		}catch(error)
+  33 |   		{
+  34 |   			logger.log("updateAddressValidUtxo error",error.message)
+  35 |   		}
+  36 | 
+  37 | }
+  38 | 	async getAddressValidUtxo(address)
+  39 | 	{
+  40 | 		try{
+  41 | 			const headers={
+  42 |   			  'Content-Type': 'application/json', // 设置请求头，指定内容类型为JSON
+  43 |   			}
+  44 |   			const params={
+  45 |   				address:address
+  46 |   			}
+  47 | 			const res = await axios.get(baseUrl+'astro/getAddressValidUtxo',{params},{headers})
+  48 | 			// logger.log(res)
+  49 | 			let utxo=res["data"]["data"]["utxo"]
+  50 | 			let index=res["data"]["data"]["index"]
+  51 | 			let value=res["data"]["data"]["value"]
+  52 | 
+  53 | 			// logger.log(res["data"]["data"])
+  54 | 			const utxostatus = await axios.get(`https://dogechain.info/api/v1/transaction/${utxo}`,{headers})
+  55 | 
+  56 | 			// logger.log(`https://dogechain.info/api/v1/transaction/${utxo}`)
+  57 | 			// logger.log(Number(utxostatus["data"]["transaction"]["outputs"][index]["value"]))
+  58 | 			if(Number(utxostatus["data"]["transaction"]["outputs"][index]["value"])!=value||utxostatus["data"]["transaction"]["outputs"][index]["spent"]!=null)
+  59 | 			{
+  60 | 				let utxos= await rpc.getAddressUTXOs(address)
+  61 | 				utxos.sort((a, b) => b.value - a.value);
+  62 | 				const maxUtox=utxos[0]
+  63 | 				utxo=maxUtox["tx_hash"]
+  64 | 				index=maxUtox["tx_output_n"]
+  65 | 				value=tool.fromElontoDoge(maxUtox["value"])
+  66 | 				await this.updateAddressValidUtxo(address,tool.fromElontoDoge(maxUtox["value"]),maxUtox["tx_hash"],maxUtox["tx_output_n"])
+  67 | 				logger.log("changeAddressUtxo successfull",address)
+  68 | 			}
+  69 | 			// logger.log(utxo,index)
+  70 | 			if(value!=0.001) return [utxo,index,value]
+  71 | 		}catch(error)
+  72 | 		{
+  73 | 			logger.log("getAddressValidUtxo error",error.message)
+  74 | 		}
+  75 | 	}
+  76 | 	async tersfer(address, privateKey, toAddress, amount){
+  77 | 		try {
+  78 | 			amount = tool.fromDogetoElon(amount)
+  79 | 			const txb = new bitcoin.TransactionBuilder(rpc.dogeNet);
+  80 | 			const utxos = await rpc.getAddressUTXOs(address); 
+  81 | 			let totalAmount = 0;
+  82 | 			let inAmount = 0;
+  83 | 			for (let utxo of utxos) {
+  84 | 			  if(utxo["value"]==100000) continue
+  85 | 			  txb.addInput(utxo.tx_hash, utxo.tx_output_n);
+  86 | 			  totalAmount+=utxo["value"]
+  87 | 			  inAmount+=1;
+  88 | 
+  89 | 			}
+  90 | 			if(totalAmount < amount)
+  91 | 				throw new Error("fouds is not enough")
+  92 | 			await txb.addOutput(toAddress, amount);
+  93 | 			await txb.addOutput(address,totalAmount-amount);
+  94 | 			const txt = txb.buildIncomplete();
+  95 | 			const txBytes = txt.toBuffer().length;
+  96 | 			const feeRate = 50000; 
+  97 | 			const fee = Math.ceil(feeRate * txBytes);
+  98 | 			const outputAmount =totalAmount - amount - fee;
+  99 | 			txb.__tx.outs[1].value = outputAmount;
+ 100 | 
+ 101 | 			for (let i = 0; i < inAmount; i++) {
+ 102 | 			     const utxo = utxos[i];
+ 103 | 			     const keyPair = bitcoin.ECPair.fromWIF(privateKey,rpc.dogeNet);
+ 104 | 			     txb.sign(i, keyPair);
+ 105 | 			}
+ 106 | 
+ 107 | 			const tx = txb.build();
+ 108 | 			const hex = tx.toHex();
+ 109 | 		    const txhash = await rpc.broadcastTransaction(hex);
+ 110 | 		    return [txhash,true]
+ 111 | 		 } catch (error) {
+ 112 | 
+ 113 | 		   	logger.error('tersfer error:', error.message);
+ 114 | 		   	return [error.message,false]
+ 115 | 
+ 116 | 		}
+ 117 | 	}
+ 118 | 	 // toAddress, amount
+ 119 | 	async tersferMul(address, privateKey, tarList){
+ 120 | 		try {
+ 121 | 
+ 122 | 			let totalOutAmout=0
+ 123 | 			for(let group of tarList) totalOutAmout=totalOutAmout+group["amount"]
+ 124 | 			totalOutAmout = tool.fromDogetoElon(totalOutAmout)
+ 125 | 			const txb = new bitcoin.TransactionBuilder(rpc.dogeNet);
+ 126 | 			const utxos = await rpc.getAddressUTXOs(address); 
+ 127 | 			let totalAmount = 0;
+ 128 | 			let inAmount = 0;
+ 129 | 			for (let utxo of utxos) {
+ 130 | 			  if(utxo["value"]==100000) continue
+ 131 | 			  txb.addInput(utxo.tx_hash, utxo.tx_output_n);
+ 132 | 			  totalAmount+=utxo["value"]
+ 133 | 			  inAmount+=1;
+ 134 | 
+ 135 | 			}
+ 136 | 			if(totalAmount < totalOutAmout)
+ 137 | 				throw new Error("fouds is not enough")
+ 138 | 
+ 139 | 			for(let group of tarList) 
+ 140 | 			{
+ 141 | 				 await txb.addOutput(group["address"],tool.fromDogetoElon(group["amount"])); 
+ 142 | 			} 
+ 143 | 			// await txb.addOutput(toAddress, amount);
+ 144 | 			await txb.addOutput(address,totalAmount-totalOutAmout);
+ 145 | 			const txt = txb.buildIncomplete();
+ 146 | 			const txBytes = txt.toBuffer().length;
+ 147 | 			const feeRate = 50000; 
+ 148 | 			const fee = Math.ceil(feeRate * txBytes);
+ 149 | 			const outputAmount =totalAmount - totalOutAmout - fee;
+ 150 | 			txb.__tx.outs[tarList.length].value = outputAmount;
+ 151 | 
+ 152 | 			for (let i = 0; i < inAmount; i++) {
+ 153 | 			     const utxo = utxos[i];
+ 154 | 			     const keyPair = bitcoin.ECPair.fromWIF(privateKey,rpc.dogeNet);
+ 155 | 			     txb.sign(i, keyPair);
+ 156 | 			}
+ 157 | 
+ 158 | 			const tx = txb.build();
+ 159 | 			const hex = tx.toHex();
+ 160 | 		    const txhash = await rpc.broadcastTransaction(hex);
+ 161 | 		    return [txhash,true]
+ 162 | 		 } catch (error) {
+ 163 | 
+ 164 | 		   	logger.error('tersferMul error:', error.message);
+ 165 | 		   	return [error.message,false]
+ 166 | 
+ 167 | 		}
+ 168 | 	}
+ 169 | 
+ 170 | 	async tersferElon(address, privateKey, toAddress, txid){
+ 171 | 		try {
+ 172 | 
+ 173 | 			// console.log(rpc)
+ 174 | 
+ 175 | 			let resp = await rpc.getTx_Rpc(txid)
+ 176 | 			const amount = resp.inputs[0].value
+ 177 | 			const txb = new bitcoin.TransactionBuilder(rpc.dogeNet);
+ 178 | 			txb.addInput(txid, 0);
+ 179 | 			const utxos = await rpc.getAddressUTXOs(address);  
+ 180 | 			let totalAmount = 0;
+ 181 | 			let inAmount = 1;
+ 182 | 
+ 183 | 			for (let utxo of utxos) {
+ 184 | 			  if(utxo["value"]==100000) continue;	
+ 185 | 			  txb.addInput(utxo.tx_hash, utxo.tx_output_n);
+ 186 | 			  totalAmount+=utxo["value"]
+ 187 | 			  inAmount+=1;
+ 188 | 			}
+ 189 | 
+ 190 | 			txb.addOutput(toAddress, amount);
+ 191 | 			txb.addOutput(address,totalAmount);
+ 192 | 			const txt = txb.buildIncomplete();
+ 193 | 			const txBytes = txt.toBuffer().length;
+ 194 | 			const feeRate = 50000; 
+ 195 | 			const fee = Math.ceil(feeRate * txBytes);
+ 196 | 			const outputAmount =totalAmount - fee;
+ 197 | 			if(totalAmount - fee < 0)
+ 198 | 				throw new Error("fouds is not enough")
+ 199 | 			txb.__tx.outs[1].value = outputAmount;
+ 200 | 			for (let i = 0; i < inAmount; i++) {
+ 201 | 			     const utxo = utxos[i];
+ 202 | 			     const keyPair = bitcoin.ECPair.fromWIF(privateKey,rpc.dogeNet);
+ 203 | 			     txb.sign(i, keyPair);
+ 204 | 			}
+ 205 | 			const tx = txb.build();
+ 206 | 			const hex = tx.toHex();
+ 207 | 			// logger.log(hex)
+ 208 | 		    const txhash = await rpc.broadcastTransaction(hex);
+ 209 | 		    return txhash
+ 210 | 		 } catch (error) {
+ 211 | 		   logger.error('tersferElon error',error.message);
+ 212 | 		}
+ 213 | 
+ 214 | 
+ 215 | 	}
+ 216 | 	//txid is nft
+ 217 | 	async tersferElonUseUtxo(address, privateKey, toAddress, txid,utxo,index,values){
+ 218 | 		try {
+ 219 | 			// logger.log(toAddress,txid,utxo,index,values)
+ 220 | 			let resp = await rpc.getTx_Rpc(txid)
+ 221 | 			// logger.log(resp)
+ 222 | 			const amount = resp.inputs[0].value
+ 223 | 			let totalAmount = tool.fromDogetoElon(values)
+ 224 | 			let inAmount = 2;
+ 225 | 			const txb = new bitcoin.TransactionBuilder(rpc.dogeNet);
+ 226 | 			txb.addInput(txid, 0);
+ 227 | 			txb.addInput(utxo, index);
+ 228 | 			txb.addOutput(toAddress, amount);
+ 229 | 			txb.addOutput(address,totalAmount);
+ 230 | 			const txt = txb.buildIncomplete();
+ 231 | 			const txBytes = txt.toBuffer().length;
+ 232 | 			const feeRate = 50000; 
+ 233 | 			const fee = Math.ceil(feeRate * txBytes);
+ 234 | 			const outputAmount =totalAmount - fee;
+ 235 | 			if(totalAmount - fee < 0)
+ 236 | 				throw new Error("fouds is not enough")
+ 237 | 			txb.__tx.outs[1].value = outputAmount;
+ 238 | 			for (let i = 0; i < inAmount; i++) {
+ 239 | 			     const keyPair = bitcoin.ECPair.fromWIF(privateKey,rpc.dogeNet);
+ 240 | 			     txb.sign(i, keyPair);
+ 241 | 			}
+ 242 | 			const tx = txb.build();
+ 243 | 			const hex = tx.toHex();
+ 244 | 		    const txhash = await rpc.broadcastTransaction(hex);
+ 245 | 		    this.updateAddressValidUtxo(address,tool.fromElontoDoge(outputAmount),txhash,1)
+ 246 | 		    return txhash
+ 247 | 		 } catch (error) {
+ 248 | 		   logger.error('tersferElonUseUtxo error',error.message);
+ 249 | 		}
+ 250 | 	}
+ 251 | }
+ 252 | 
+ 253 | module.exports = operation;
+
+
+// ====== FILE: ./monitor/monitorPay.js ======
+
+   1 | const WebSocket = require('ws');
+   2 | const axios = require("axios")
+   3 | const Rpc = require("../rpc/initRpc.js")
+   4 | const logger = require('../tool/logger.js');
+   5 | const Operation=require("../operation/operation.js")
+   6 | const operation =new Operation();
+   7 | const Tool=require("../tool/tool.js")
+   8 | const SlowSpeedQueue=require("../slowSpeed/slowSpeedQueue.js")
+   9 | const cheerio = require('cheerio');
+  10 | const tool =new Tool();
+  11 | require('dotenv').config(); // 加载 .env 文件中的环境变量
+  12 | const wallets = JSON.parse(process.env.wallets);
+  13 | const walletNums=wallets.length;
+  14 | const nftMsg=JSON.parse(process.env.nftMsg)
+  15 | const tax=process.env.tax
+  16 | const rpc = new Rpc(process.env.rpcip,process.env.rpcport,process.env.rpcuser,process.env.rpcpassword,process.env.rpccookie);
+  17 | const baseurl=process.env.serverUrl
+  18 | const monitorUrl=process.env.monitorUrl
+  19 | const backUpmonitorUrl=process.env.backUpmonitorUrl
+  20 | const projectAddress=[]
+  21 | 
+  22 | for(let group of wallets) projectAddress.push(group["recive"])
+  23 | function sleep(ms) {
+  24 |   return new Promise(resolve => setTimeout(resolve, ms));
+  25 | }
+  26 | 
+  27 | async function transferMint(to,utxo){
+  28 | 	// await operation.tersferElon(from,privateKey,to,utxo)
+  29 | 	try{
+  30 | 
+  31 | 		const utxoMsg = await operation.getAddressValidUtxo(this.address)
+  32 | 		await operation.tersferElonUseUtxo(this.address, this.privateKey, to, utxo,utxoMsg[0],utxoMsg[1],utxoMsg[2])
+  33 | 	}catch(error){
+  34 | 		logger.log("transferMint error",error.message)
+  35 | 	}
+  36 | 
+  37 | }
+  38 | 
+  39 | const speedBuffer = Array.from({ length: walletNums }, (_, i) => new SlowSpeedQueue(transferMint,wallets[i].recive,wallets[i].recivePrivateKey));
+  40 | 
+  41 | 
+  42 | class monitorPay{
+  43 | 	constructor(ourAddress){
+  44 | 		this.targetAddr=ourAddress;
+  45 | 		this.befBlock=""
+  46 | 		this.befBlockNum=""
+  47 | 		this.funList=[]
+  48 | 		this.nftMap =new Map();
+  49 | 		this.nftUtxoDate;
+  50 | 		this.nftUtxoMap =new Map();
+  51 | 		this.reInit=setInterval(()=>{
+  52 | 			try{
+  53 | 				logger.log("开始24h初始化")
+  54 | 					this.init();
+  55 | 			}catch(error)
+  56 | 			{
+  57 | 				logger.log("every day init Error",error.message)
+  58 | 			}
+  59 | 
+  60 | 		},86400000)
+  61 | 		// 86400000
+  62 | 	}
+  63 | 
+  64 | 
+  65 | 	async isHaveHash(hash)
+  66 | 	{
+  67 | 		const params = {
+  68 | 		  	txId: hash
+  69 | 		};
+  70 | 		// 使用Axios发送GET请求
+  71 | 		try{
+  72 | 			const res = await axios.get(baseurl+'astro/payCheck', {params})
+  73 | 			if(res.status==200) return res.data.data
+  74 | 			else{
+  75 | 				logger.log("is HaveHash请求异常，statusCode is",res.status)
+  76 | 				return;
+  77 | 			}
+  78 | 	
+  79 | 		}catch(error){
+  80 | 			logger.log("isHaveHash error",error.message)
+  81 | 			return
+  82 | 		}
+  83 | 		
+  84 | 	}
+  85 | 
+  86 | 	async pay(address,amount,hash)
+  87 | 	{
+  88 | 		const data = {
+  89 |     		"userUrl": address,
+  90 |     		"payAmt": amount,
+  91 |     		"txId": hash
+  92 | 		}
+  93 | 		// 使用Axios发送GET请求
+  94 | 		try{
+  95 | 			const res =await axios.post(baseurl+'astro/payCallBack',data)
+  96 | 			if(res.status==200)
+  97 | 			{
+  98 | 				const responseData=res.data.data
+  99 | 				const to=responseData["address"]
+ 100 | 
+ 101 | 				for(let group of responseData.addressUtxo)
+ 102 | 				{
+ 103 | 
+ 104 | 					const from=group["address"]
+ 105 | 					const utxo=group["nftUtxo"]
+ 106 | 					let ownerIndex=-1;
+ 107 | 					let privateKey=""
+ 108 | 
+ 109 | 					for(let wallet of wallets)
+ 110 | 					{
+ 111 | 						if(wallet["recive"]==from)
+ 112 | 						{
+ 113 | 							privateKey=wallet["recivePrivateKey"]
+ 114 | 							ownerIndex=wallet["group"]-1;
+ 115 | 							break;
+ 116 | 						}
+ 117 | 					}
+ 118 | 					if(ownerIndex<0)
+ 119 | 					{
+ 120 | 						logger.log("pay nft is not in our wallet")
+ 121 | 						continue;
+ 122 | 					}
+ 123 | 					speedBuffer[ownerIndex].enqueue(to,utxo)
+ 124 | 				}
+ 125 | 			}
+ 126 | 			else{
+ 127 | 				logger.log("pay 请求异常，statusCode is",res.status)
+ 128 | 			}
+ 129 | 
+ 130 | 		}catch(error)
+ 131 | 		{
+ 132 | 			logger.log("pay error",error.message)
+ 133 | 		}
+ 134 | 
+ 135 | 
+ 136 | 	}
+ 137 | 
+ 138 | 
+ 139 | 	async use(fun){
+ 140 | 		this.funList.push(fun)
+ 141 | 	}
+ 142 | 	AddressPay=async (transaction)=>{
+ 143 | 		try{
+ 144 | 
+ 145 | 				const inPuts=transaction["inputs"]
+ 146 | 	 			const outPuts=transaction["outputs"]
+ 147 | 	 			let inHaveOur=false;
+ 148 | 	 			let outHaveOur=false;
+ 149 | 	 			for(let vin of inPuts)
+ 150 | 	 			{
+ 151 | 	 				if(vin["address"]==this.targetAddr)
+ 152 | 	 				{
+ 153 | 	 					inHaveOur=true
+ 154 | 	 					break;
+ 155 | 	 				}
+ 156 | 	 			}
+ 157 | 	 			if(inHaveOur==false)
+ 158 | 	 			{
+ 159 | 	 				for(let vout of outPuts)
+ 160 | 	 			    {
+ 161 | 	 			    	if(vout["address"]==this.targetAddr){
+ 162 | 	 			    		outHaveOur=true;
+ 163 | 	 			    		break;
+ 164 | 	 			    	}
+ 165 | 	 			    }
+ 166 | 	 			}
+ 167 | 	 			if(!inHaveOur&&outHaveOur)
+ 168 | 	 			{
+ 169 | 	 				let totalAmount = 0;
+ 170 | 	 				for(let vout of outPuts)
+ 171 | 	 			    {
+ 172 | 	 			    	if(vout["address"]==this.targetAddr){
+ 173 | 		 	    	totalAmount+=vout["value"];
+ 174 | 	 			    	}
+ 175 | 	 			    }
+ 176 | 	 			    const addr = inPuts[0]["address"]
+ 177 | 	 			    const receive = totalAmount
+ 178 | 	 			    const isHave =await this.isHaveHash(transaction["hash"])
+ 179 | 	 			    if(!isHave || isHave==undefined) return;
+ 180 | 	 			    logger.log(`监听到${addr}有效转账，金额为${tool.fromElontoDoge(receive)},hash为${transaction["hash"]}`)
+ 181 | 	 			    const paystatus =await this.pay(addr,receive,transaction["hash"])
+ 182 | 
+ 183 | 
+ 184 | 	 			}			
+ 185 | 
+ 186 | 		}catch(error)
+ 187 | 		{
+ 188 | 			logger.log("AddressPay error",error.message)
+ 189 | 		}
+ 190 | 	
+ 191 | 	}
+ 192 | 
+ 193 | 
+ 194 |   async getshibescription(hash){
+ 195 | 
+ 196 |     try{
+ 197 |           let gtid
+ 198 |           let respon
+ 199 |           try
+ 200 |           {
+ 201 |           		respon= await axios.get(`${monitorUrl}output/${hash}:0`)
+ 202 |           		if(respon.status != 200)
+ 203 |           		{
+ 204 |           			logger.log("主线路节点可能异常，开始尝试公共索引节点")
+ 205 | 								respon = await axios.get(`${backUpmonitorUrl}output/${hash}:0`)
+ 206 | 								if(respon.status != 200) throw new Error("getshibescription error")
+ 207 |           		} 
+ 208 |           }catch(error)
+ 209 |           {			
+ 210 |           			logger.log("索引报错,请求备用:",error.message)
+ 211 |           			respon = await axios.get(`${backUpmonitorUrl}output/${hash}:0`)
+ 212 | 								if(respon.status != 200) throw new Error("getshibescription error")
+ 213 |           }
+ 214 |           
+ 215 | 
+ 216 |           const $ = cheerio.load(respon.data);
+ 217 |           const addressElement = $('dd.thumbnails a').eq(0);
+ 218 |           if (addressElement) {
+ 219 |           		if(addressElement.attr('href')==undefined) return null
+ 220 |               gtid = addressElement.attr('href').split("/")[2].slice(0, -2);
+ 221 |           }
+ 222 |           if(gtid==undefined) return null
+ 223 |           return gtid
+ 224 | 
+ 225 | 
+ 226 |     }catch(error)
+ 227 |     {
+ 228 |       if(error.response&&error.response.status==404) return false;
+ 229 |       throw new Error(`getshibescription${error.message}`)
+ 230 |     }
+ 231 | 
+ 232 | 
+ 233 |   }
+ 234 | 
+ 235 | 
+ 236 | 
+ 237 | 	nftTransfer=async (transaction)=>
+ 238 | 	{
+ 239 | 
+ 240 | 		try{
+ 241 | 				const hash=transaction["hash"]
+ 242 | 
+ 243 | 				const memeryCheckStatus = await this.getTaxBytx(hash)
+ 244 | 				if(memeryCheckStatus==true) return;
+ 245 | 				const inPuts=transaction["inputs"]
+ 246 | 	 			const outPuts=transaction["outputs"]
+ 247 | 	 			let owner = null;
+ 248 | 	 			let taxAmount = 0;
+ 249 | 	 			let totalAmount = 0;
+ 250 | 	 			let isTax = 0;
+ 251 | 	 			let inAddress = []
+ 252 | 	 			let nowid=null;
+ 253 | 		
+ 254 | 	 			const gtid = await this.getshibescription(hash)
+ 255 | 	 			if(gtid==null||gtid==false||gtid==undefined) return;
+ 256 | 		
+ 257 | 				if(this.nftMap.has(gtid)){
+ 258 | 					nowid=this.nftMap.get(gtid)
+ 259 | 					for(let ins of inPuts) if(ins["value"]!=100000) inAddress.push(ins["address"])
+ 260 | 					for(let vout of outPuts)
+ 261 | 	 			  {
+ 262 | 	 			   	 	if(vout["value"]==100000&&owner==null) owner = vout["address"]
+ 263 | 	 			   	 	if(inAddress.indexOf(vout["address"])!=-1) continue;
+ 264 | 	 			   	 	if(vout["address"]==this.targetAddr){
+ 265 | 				 		    	taxAmount+=vout["value"];
+ 266 | 	 			   	 	}
+ 267 | 	 			   	 	totalAmount += vout["value"];
+ 268 | 	 			   	 }
+ 269 | 	 			   	 if(totalAmount!=0) isTax = (taxAmount/totalAmount)>=tax?1:0; //false is 没
+ 270 | 	 			   	 if(projectAddress.indexOf(inPuts[0]["address"])!=-1) isTax=1;
+ 271 | 	 			   	 let data = JSON.stringify({
+ 272 | 					  "nftId": nowid,
+ 273 | 					  "nftUtxo": transaction["hash"],
+ 274 | 					  "ownerAddress": owner,
+ 275 | 					  "taxStatus": isTax,
+ 276 | 					  "txAmt": totalAmount-taxAmount
+ 277 | 					});
+ 278 | 					
+ 279 | 					let config = {
+ 280 | 					  method: 'post',
+ 281 | 					  maxBodyLength: Infinity,
+ 282 | 					  url: baseurl+'astro/updateNft',
+ 283 | 					  headers: { 
+ 284 | 					    'Content-Type': 'application/json'
+ 285 | 					  },
+ 286 | 					  data : data
+ 287 | 					};
+ 288 | 					
+ 289 | 					const res =await axios.request(config)
+ 290 | 					if(res["data"]["code"]==5001)
+ 291 | 					{
+ 292 | 								logger.log("nft update Error:",nft["nftId"])
+ 293 | 					}else{
+ 294 | 								this.nftUtxoMap.set(transaction["hash"],nowid)
+ 295 | 								logger.log("监测到nft转移2:",nowid,"hash 为:",transaction["hash"])
+ 296 | 					}
+ 297 | 
+ 298 | 				}		
+ 299 | 
+ 300 | 		}catch(error)
+ 301 | 		{
+ 302 | 			logger.log("nftTransfer error",error.message)
+ 303 | 		}
+ 304 | 	
+ 305 | 
+ 306 | 
+ 307 | 	}
+ 308 | 
+ 309 | 	async getTaxBytx(hash)
+ 310 | 	{
+ 311 | 
+ 312 | 		const transaction = await rpc.getTx_Rpc(hash)
+ 313 | 		const inPuts=transaction["inputs"]
+ 314 | 	 	const outPuts=transaction["outputs"]
+ 315 | 	 	let owner = null;
+ 316 | 	 	let taxAmount = 0;
+ 317 | 	 	let totalAmount = 0;
+ 318 | 	 	let isTax = 0;
+ 319 | 	 	let inAddress = []
+ 320 | 	 	let nowid=null;
+ 321 | 	 	if(this.nftUtxoMap.get(inPuts[0]["hash"])!=undefined&&inPuts[0]["value"]==100000)
+ 322 | 	 	{
+ 323 | 	 		nowid=this.nftUtxoMap.get(inPuts[0]["hash"]);
+ 324 | 			this.nftUtxoMap.delete(inPuts[0]["hash"])
+ 325 | 			this.nftUtxoMap.set(hash,nowid);
+ 326 | 
+ 327 | 			for(let ins of inPuts) if(ins["value"]!=100000) inAddress.push(ins["address"])
+ 328 | 			for(let vout of outPuts)
+ 329 | 	 			{
+ 330 | 	 			 	 	if(vout["value"]==100000&&owner==null) owner = vout["address"]
+ 331 | 	 			 	 	if(inAddress.indexOf(vout["address"])!=-1) continue;
+ 332 | 	 			 	 	if(vout["address"]==this.targetAddr){
+ 333 | 					    	taxAmount+=vout["value"];
+ 334 | 	 			 	 	}
+ 335 | 	 			 	 	totalAmount += vout["value"];
+ 336 | 	 			 	 }
+ 337 | 	 			 	 if(totalAmount!=0) isTax = (taxAmount/totalAmount)>=tax?1:0; //false is 没
+ 338 | 	 			 	 if(projectAddress.indexOf(inPuts[0]["address"])!=-1) isTax=1;
+ 339 | 	 			 	 let data = JSON.stringify({
+ 340 | 			  "nftId": nowid,
+ 341 | 			  "nftUtxo": transaction["hash"],
+ 342 | 			  "ownerAddress": owner,
+ 343 | 			  "taxStatus": isTax,
+ 344 | 			  "txAmt": totalAmount-taxAmount
+ 345 | 			});
+ 346 | 			
+ 347 | 			let config = {
+ 348 | 			  method: 'post',
+ 349 | 			  maxBodyLength: Infinity,
+ 350 | 			  url: baseurl+'astro/updateNft',
+ 351 | 			  headers: { 
+ 352 | 			    'Content-Type': 'application/json'
+ 353 | 			  },
+ 354 | 			  data : data
+ 355 | 			};
+ 356 | 			
+ 357 | 			try{
+ 358 | 					const res =await axios.request(config)
+ 359 | 
+ 360 | 					if(res["data"]["code"]==5001)
+ 361 | 					{
+ 362 | 								logger.log("nft update Error:",nft["nftId"])
+ 363 | 								return false
+ 364 | 					}else{
+ 365 | 								this.nftUtxoMap.set(transaction["hash"],nowid)
+ 366 | 								logger.log("监测到nft转移:",nowid,"hash 为:",transaction["hash"])
+ 367 | 								return true;
+ 368 | 					}
+ 369 | 
+ 370 | 
+ 371 | 			}catch(error)
+ 372 | 			{
+ 373 | 					logger.log("监测到nft转移失败:",nowid,"hash 为:",transaction["hash"],error.message)
+ 374 | 					return false;
+ 375 | 			}
+ 376 | 
+ 377 | 
+ 378 | 
+ 379 | 
+ 380 | 	 	}
+ 381 | 	}
+ 382 | 
+ 383 | 	async Monitor(){
+ 384 | 		const blockhash = await rpc.rpcRequest("getbestblockhash");
+ 385 | 		if(this.befBlock==blockhash) return;
+ 386 | 		const blockData = await rpc.rpcRequest("getblock",[blockhash])
+ 387 | 		let blockNumStard = blockData["height"]
+ 388 | 		let resData
+ 389 | 		try{
+ 390 | 				resData = await axios.get(monitorUrl)
+ 391 | 				if(resData.status != 200)
+ 392 |     		{
+ 393 |     		    logger.log("主线路节点可能异常，开始尝试公共索引节点")
+ 394 | 						resData = await axios.get(backUpmonitorUrl)
+ 395 | 						if(resData.status != 200) 
+ 396 | 						{
+ 397 | 								logger.log("monitor error")
+ 398 | 						}
+ 399 |     		} 
+ 400 | 		}catch(error)
+ 401 | 		{
+ 402 | 			logger.log("索引报错,请求备用:",error.message)
+ 403 | 			resData = await axios.get(backUpmonitorUrl)
+ 404 | 			if(resData.status != 200) 
+ 405 | 			{
+ 406 | 					logger.log("monitor error")
+ 407 | 			}
+ 408 | 		}
+ 409 | 
+ 410 | 		let blockNumGet
+ 411 | 		const $ = cheerio.load(resData.data);
+ 412 | 		const blockElement = $('ol');
+ 413 | 		if (blockElement) {
+ 414 | 		    blockNumGet = blockElement.attr("start");
+ 415 | 		}
+ 416 | 		if(blockNumGet+1 == blockNumStard && this.waitTimes<1)
+ 417 | 		{
+ 418 | 				this.waitTimes++;
+ 419 | 				return;
+ 420 | 		}else{
+ 421 | 			this.waitTimes=0;
+ 422 | 		}
+ 423 | 		this.befBlock=blockhash
+ 424 | 		const blockTx = await rpc.rpcRequest("getblock",[blockhash]);
+ 425 | 		for(let hash of blockTx["tx"])
+ 426 | 		{
+ 427 | 			
+ 428 | 			let transaction
+ 429 | 
+ 430 | 	 		try{
+ 431 | 	 		   	transaction = await rpc.getTx_Rpc(hash)
+ 432 | 	 		}catch(error)
+ 433 | 	 		{
+ 434 | 	 			continue;
+ 435 | 	 		}
+ 436 | 	 		if(transaction==undefined) continue;
+ 437 | 	 		if(transaction["inputs"][0]["address"]=="coinbase") continue;
+ 438 | 
+ 439 | 	 		for(let fun of this.funList) await fun(transaction);
+ 440 | 
+ 441 | 
+ 442 | 		}
+ 443 | 
+ 444 | 	}
+ 445 | 
+ 446 | 	async init(){
+ 447 | 
+ 448 | 		try{
+ 449 | 				for(let address of wallets) await operation.getAddressValidUtxo(address["recive"])			
+ 450 | 				const response = await axios.post(baseurl+"astro/allUtxo")
+ 451 | 				if(response.data.code!=200) throw new Error("init error");
+ 452 | 				this.nftUtxoDate = response["data"]["data"]			
+ 453 | 				this.nftUtxoDate.sort((a,b)=>a["nftId"]-b["nftId"])
+ 454 | 				for(let nft of this.nftUtxoDate)
+ 455 | 				{
+ 456 | 					if(nft["nftId"]%1000==0) logger.log("当前进度为:",nft["nftId"])
+ 457 | 					const gt = nft["gtId"];
+ 458 | 					let owner = null;
+ 459 | 					let localtion = null;
+ 460 | 					let respon
+ 461 | 					try{
+ 462 | 							respon = await axios.get(`${monitorUrl}shibescription/${gt}i0`)
+ 463 | 							if(respon.status != 200)
+ 464 |           		{
+ 465 |           			logger.log("主线路节点可能异常，开始尝试公共索引节点")
+ 466 | 								respon = await axios.get(`${backUpmonitorUrl}shibescription/${gt}i0`)
+ 467 | 								if(respon.status != 200) throw new Error("init error")
+ 468 |           		} 
+ 469 | 					}catch(error)
+ 470 | 					{
+ 471 | 								logger.log("索引报错,请求备用:",error.message)
+ 472 | 								respon = await axios.get(`${backUpmonitorUrl}shibescription/${gt}i0`)
+ 473 | 								if(respon.status != 200) throw new Error("init error")
+ 474 | 					}
+ 475 | 
+ 476 | 
+ 477 | 					const $ = cheerio.load(respon.data);
+ 478 | 					const addressElement = $('dd.monospace').eq(1);
+ 479 | 					if (addressElement) {
+ 480 | 					    owner = addressElement.text();
+ 481 | 					}
+ 482 | 					
+ 483 | 					const locationElement = $('dd.monospace').eq(2); // Get the second dd.monospace element
+ 484 | 					if (locationElement) {
+ 485 | 					    localtion = locationElement.text().split(":")[0];
+ 486 | 					}			
+ 487 | 					if(!(owner && localtion)) throw new Error("init error")			
+ 488 | 
+ 489 | 					if(nft["nftUtxo"] != localtion || nft["address"] !=owner)
+ 490 | 					{
+ 491 | 						let transaction
+ 492 | 	 					try{
+ 493 | 	 					   	transaction = await rpc.getTx_Rpc(localtion)
+ 494 | 	 					}catch(error)
+ 495 | 	 					{
+ 496 | 	 						continue;
+ 497 | 	 					}
+ 498 | 	 					if(transaction==undefined) continue;
+ 499 | 	 					if(transaction["inputs"][0]["address"]=="coinbase") continue;			
+ 500 | 	 					const inPuts=transaction["inputs"]
+ 501 | 	 					const outPuts=transaction["outputs"]
+ 502 | 	 					let taxAmount = 0;
+ 503 | 	 					let totalAmount = 0;
+ 504 | 	 					let isTax = 0;
+ 505 | 	 					let inAddress = []
+ 506 | 	 					for(let ins of inPuts) if(ins["value"]!=100000) inAddress.push(ins["address"])
+ 507 | 	 					for(let vout of outPuts)
+ 508 | 	 			   		 {
+ 509 | 	 			   		 	if(inAddress.indexOf(vout["address"])!=-1) continue;
+ 510 | 	 			   		 	if(vout["value"]==100000) continue;
+ 511 | 	 			   		 	if(vout["address"]==this.targetAddr){
+ 512 | 				 			    	taxAmount+=vout["value"];
+ 513 | 	 			   		 	}
+ 514 | 	 			   		 	totalAmount += vout["value"];
+ 515 | 	 			   		 }			
+ 516 | 	 			   		 nft["nftUtxo"]=localtion;
+ 517 | 	 			   		 if(totalAmount!=0) isTax = (taxAmount/totalAmount)>=tax?1:0; //0 is 没	
+ 518 | 	 			   		 if(projectAddress.indexOf(outPuts[0]["address"])!=-1) isTax=1;
+ 519 | 	 			   		 let data = JSON.stringify({
+ 520 | 						  "nftId": nft["nftId"],
+ 521 | 						  "nftUtxo": localtion,
+ 522 | 						  "ownerAddress": owner,
+ 523 | 						  "taxStatus": isTax,
+ 524 | 						  "txAmt": totalAmount-taxAmount
+ 525 | 						});	
+ 526 | 						let config = {
+ 527 | 						  method: 'post',
+ 528 | 						  maxBodyLength: Infinity,
+ 529 | 						  url: baseurl+'astro/updateNft',
+ 530 | 						  headers: { 
+ 531 | 						    'Content-Type': 'application/json'
+ 532 | 						  },
+ 533 | 						  data : data
+ 534 | 						};
+ 535 | 						const res =await axios.request(config)
+ 536 | 						if(res["data"]["code"]==5001)
+ 537 | 						{
+ 538 | 								logger.log("nft update Error",nft["nftId"])
+ 539 | 						}else{
+ 540 | 								logger.log("init nft,id is:",nft["nftId"])
+ 541 | 						}
+ 542 | 
+ 543 | 					}
+ 544 | 
+ 545 | 					this.nftUtxoMap.set(localtion,nft["nftId"])
+ 546 | 
+ 547 | 
+ 548 | 				}
+ 549 | 		}catch(error)
+ 550 | 		{
+ 551 | 			logger.log("init error",error.message)
+ 552 | 		}
+ 553 | 
+ 554 | 
+ 555 | 	}
+ 556 | 
+ 557 | 
+ 558 | 	async runMonitor(){
+ 559 | 
+ 560 | 
+ 561 | 	 	for(let nft of nftMsg) this.nftMap.set(nft["gtid"],nft["id"])
+ 562 | 
+ 563 | 		try{
+ 564 | 			await this.init()
+ 565 | 			logger.log("start")
+ 566 | 			this.use(this.AddressPay)
+ 567 | 			this.use(this.nftTransfer)
+ 568 | 			const timer=setInterval(()=>{
+ 569 | 					this.Monitor()
+ 570 | 			},1000)		
+ 571 | 		}catch(error)
+ 572 | 		{
+ 573 | 			logger.log("monitor error",error.message)
+ 574 | 		}
+ 575 | 
+ 576 | 	}
+ 577 | 
+ 578 | 
+ 579 | 
+ 580 | }
+ 581 | 
+ 582 | 
+ 583 | module.exports = monitorPay;
+ 584 | 
+ 585 | 
+ 586 | 
+ 587 | 
+
+
+
+// ====== FILE: ./monitor/decodeElon.js ======
+
+   1 | const logger = require('../tool/logger.js');
+   2 | const dogecore = require('bitcore-lib-doge')
+   3 | const { Script } = dogecore
+   4 | const axios = require('axios');
+   5 | 
+   6 | class doginals{
+   7 |     chunkToNumber(chunk) {
+   8 |         if (chunk.opcodenum == 0) return 0
+   9 |         if (chunk.opcodenum == 1) return chunk.buf[0]
+  10 |         if (chunk.opcodenum == 2) return chunk.buf[1] * 255 + chunk.buf[0]
+  11 |         if (chunk.opcodenum > 80 && chunk.opcodenum <= 96) return chunk.opcodenum - 80
+  12 |         return undefined
+  13 |     }
+  14 |     async decodeElonFromFront(txid) {
+  15 |         let resp = await axios.get(`https://dogechain.info/api/v1/transaction/${txid}`)
+  16 |         let transaction = resp.data.transaction
+  17 |         let script = Script.fromHex(transaction.inputs[0].scriptSig.hex)
+  18 |         let chunks = script.chunks
+  19 |         let prefix = chunks.shift().buf.toString('utf-8')
+  20 |         if (prefix != 'ord') {
+  21 |             throw new Error('not a doginal')
+  22 |         }
+  23 |         let pieces = this.chunkToNumber(chunks.shift())
+  24 |         let contentType = chunks.shift().buf.toString('utf-8')
+  25 |         let data = Buffer.alloc(0)
+  26 |         let remaining = pieces
+  27 |         while (remaining && chunks.length) {
+  28 |             let n = this.chunkToNumber(chunks.shift())
+  29 |     
+  30 |             if (n !== remaining - 1) {
+  31 |                 if(transaction.outputs[0].spent==null) break;
+  32 |                 txid = transaction.outputs[0].spent.hash
+  33 |     
+  34 |                 resp = await axios.get(`https://dogechain.info/api/v1/transaction/${txid}`)
+  35 |                 transaction = resp.data.transaction
+  36 |                 script = Script.fromHex(transaction.inputs[0].scriptSig.hex)
+  37 |                 chunks = script.chunks
+  38 |                 continue
+  39 |             }
+  40 |     
+  41 |             data = Buffer.concat([data, chunks.shift().buf])
+  42 |             remaining -= 1
+  43 |         }
+  44 |         return {
+  45 |             contentType,
+  46 |             data
+  47 |         }
+  48 |     }
+  49 | 
+  50 | }
+  51 | 
+  52 | module.exports = doginals;
+  53 | 
+
+
+
+// ====== FILE: ./test/chooseAddress.js ======
+
+   1 | const fs = require("fs").promises
+   2 | 
+   3 | 
+   4 | const mint=async (address,nums)=>{
+   5 | 	let payAmount,orderId
+   6 | 	try{
+   7 | 		const data={		
+   8 |     		"userUrl": address,
+   9 |     		"mintAmount":nums
+  10 | 		}
+  11 | 		const response = await axios.post(baseUrl+"astro/mintPay",data);
+  12 | 
+  13 | 		// console.log(response["data"])
+  14 | 		if(response.data.data==null) throw new Error(response.data["message"])
+  15 | 		payAmount = response.data.data["payAmount"]
+  16 | 		orderId = response.data.data["orderId"]
+  17 | 		
+  18 | 		console.log(response.data.data)
+  19 | 		
+  20 | 		if(payAmount==null||orderId==null) {
+  21 | 			console.log(address,"超出超出次数，pass")
+  22 | 			return;
+  23 | 		}
+  24 | 	}catch(error)
+  25 | 	{
+  26 | 		console.log("order create error",error)
+  27 | 		return;
+  28 | 	}
+  29 | 
+  30 | }
+  31 | 
+  32 | const main=async ()=>{
+  33 | 	const addressList=[]
+  34 | 	const data = await fs.readFile("./wallets_teston.txt")
+  35 | 	const start=79
+  36 | 	const end=88
+  37 | 	const wallet = JSON.parse(data)
+  38 | 	for(let address of wallet){
+  39 | 		if(address["group"]>=start && address["group"]<=end) {
+  40 | 			console.log(address["recive"],"\n")
+  41 | 			console.log(address["recivePrivateKey"],"\n")
+  42 | 		}
+  43 | 	}
+  44 | 
+  45 | 
+  46 | 
+  47 | 
+  48 | 
+  49 | 	// 获取地址的 UTXO
+  50 | 
+  51 | 
+  52 | 
+  53 | 
+  54 | }
+  55 | 
+  56 | main()
+  57 | 
+  58 | 
+
+
+
+// ====== FILE: ./test/rebuildWallet.js ======
+
+   1 | const fs = require("fs").promises
+   2 | const Rpc = require("../rpc/initRpc.js")
+   3 | const rpc = new Rpc("94.130.49.158",22555,"powerDoge","powerDoge");
+   4 | const main=async ()=>{
+   5 | 	const addressList=[]
+   6 | 	const data = await fs.readFile("./wallets_testone_finish.txt")
+   7 | 
+   8 | 	const wallet = JSON.parse(data)
+   9 | 	for(let address of wallet){
+  10 | 		if(address["group"]<=0) continue;
+  11 | 		const utxo = await rpc.getAddressUTXOs(address["recive"])
+  12 | 
+  13 | 		utxo.sort((a, b) => b.value - a.value);
+  14 | 		if(utxo[0]["value"]==100000) continue
+  15 | 		address["gasUtxo"]=utxo[0]["tx_hash"]
+  16 | 		address["index"]=utxo[0]["tx_output_n"]
+  17 | 		console.log(address["group"])
+  18 | 		fs.writeFile("./wallets_testone_finish.txt",JSON.stringify(wallet))
+  19 | 	}
+  20 | 
+  21 | 
+  22 | 
+  23 | 	// 获取地址的 UTXO
+  24 | 
+  25 | 
+  26 | 
+  27 | 
+  28 | }
+  29 | 
+  30 | main()
+
+
+// ====== FILE: ./test/frontback.js ======
+
+   1 | const axios = require("axios")
+   2 | const baseUrl = "http://103.146.158.10:8088/"
+   3 | 
+   4 | const bitcoin = require('bitcoinjs-lib');
+   5 | const Doginals = require("../monitor/decodeElon.js")
+   6 | const Rpc = require("../rpc/initRpc.js")
+   7 | const Tools = require("../tool/tool.js")
+   8 | const tool = new Tools
+   9 | const doginals = new Doginals();
+  10 | const rpc = new Rpc("94.130.49.158",22555,"powerDoge","powerDoge","__cookie__:d11f6187560b753e272c998707c09e4a9deeee95097bb98dc81c61f6cb256be0");
+  11 | 
+  12 | const frontbackFun = async (address,privateKey,nums,utxogas,indexgas)=>{
+  13 | 
+  14 | 
+  15 | 	let payAmount,orderId
+  16 | 	try{
+  17 | 		const data={		
+  18 |     		"userUrl": address,
+  19 |     		"mintAmount":nums
+  20 | 		}
+  21 | 		const response = await axios.post(baseUrl+"astro/mintPay",data);
+  22 | 
+  23 | 		// console.log(response["data"])
+  24 | 		if(response.data.data==null) throw new Error(response.data["message"])
+  25 | 		payAmount = response.data.data["payAmount"]
+  26 | 		orderId = response.data.data["orderId"]
+  27 | 		
+  28 | 		console.log(response.data.data)
+  29 | 		
+  30 | 		if(payAmount==null||orderId==null) {
+  31 | 			console.log(address,"超出超出次数，pass")
+  32 | 			return;
+  33 | 		}
+  34 | 	}catch(error)
+  35 | 	{
+  36 | 		console.log("order create error",error)
+  37 | 		return;
+  38 | 
+  39 | 	}
+  40 | 
+  41 | 		try {
+  42 | 						// console.log(`https://dogechain.info/api/v1/transaction/${utxogas}`)
+  43 | 			const utxostatus = await axios.get(`https://dogechain.info/api/v1/transaction/${utxogas}`)
+  44 | 
+  45 | 			const balanceDate = Number(utxostatus["data"]["transaction"]["outputs"][indexgas]["value"])
+  46 | 			const totalAmount=tool.fromDogetoElon(balanceDate)
+  47 | 
+  48 | 			const toAddress = "DFwzRnAHXsDHtekYHRi2NQp8aj9qqzddqP"
+  49 | 
+  50 | 			let amount = tool.fromDogetoElon(payAmount)
+  51 | 			const txb = new bitcoin.TransactionBuilder(rpc.dogeNet);
+  52 | 			// console.log(utxogas,indexgas,address)
+  53 | 			txb.addInput(utxogas, indexgas);
+  54 | 			if(totalAmount < amount)
+  55 | 				throw new Error("fouds is not enough")
+  56 | 			await txb.addOutput(toAddress, amount);
+  57 | 			await txb.addOutput(address,totalAmount-amount);
+  58 | 			const txt = txb.buildIncomplete();
+  59 | 			const txBytes = txt.toBuffer().length;
+  60 | 			const feeRate = 20000; 
+  61 | 			const fee = Math.ceil(feeRate * txBytes);
+  62 | 			const outputAmount =totalAmount - amount - fee;
+  63 | 			txb.__tx.outs[1].value = outputAmount;
+  64 | 
+  65 | 			// console.log(totalAmount,amount,outputAmount)
+  66 | 			for (let i = 0; i < 1; i++) {
+  67 | 			     const keyPair = bitcoin.ECPair.fromWIF(privateKey,rpc.dogeNet);
+  68 | 			     txb.sign(i, keyPair);
+  69 | 			}
+  70 | 
+  71 | 			const tx = txb.build();
+  72 | 			const hex = tx.toHex();
+  73 | 			// console.log(hex)
+  74 | 		    const txhash = await rpc.broadcastTransaction(hex);
+  75 | 		    // console.log(txhash)
+  76 | 
+  77 | 		    // const txhash=1
+  78 | 
+  79 | 
+  80 | 
+  81 | 		    try{
+  82 | 				const data={
+  83 | 					"orderId": orderId,
+  84 | 					"payStatus": "success",
+  85 | 					"txId": txhash,
+  86 | 					"payOrigin": "www"
+  87 | 				}
+  88 | 				const response = await axios.post(baseUrl+"astro/mintCallBack",data);
+  89 | 				console.log(response.data)
+  90 | 
+  91 |    			}catch(error)
+  92 |    			{
+  93 |    				console.log("mint error",error.message)
+  94 |    			}
+  95 | 
+  96 | 
+  97 | 		 } catch (error) {
+  98 | 
+  99 | 		   	console.error('Error creating, signing and broadcasting transaction:', error.message);
+ 100 | 
+ 101 | 
+ 102 | 		}
+ 103 | 
+ 104 | 
+ 105 | 
+ 106 | 
+ 107 | 
+ 108 | }
+ 109 | 
+ 110 | module.exports=frontbackFun;
+ 111 | // frontbackFun("DHjtuw8sf73vifMtfDs4a1XdwAM98thmwW","QTwpkPD41frZN2gWiikdEoiMTaBjHd2BymrxjwAykRQmg9csS1ni",1,"f68ca85cc5d22387f069552eb662d68e164fbabca0476a232402645fc1d6dd2c",1)
+ 112 | 
+ 113 | 
+ 114 | 
+ 115 | 
+ 116 | 
+ 117 | 
+ 118 | 
+ 119 | 
+ 120 | 
+
+
+
+// ====== FILE: ./test/worker.js ======
+
+   1 | const { parentPort } = require('worker_threads');
+   2 | const frontbackFun = require("./frontback.js")
+   3 | 
+   4 | const sleep = async (ms)=>{
+   5 |   return new Promise(resolve => setTimeout(resolve, ms));
+   6 | }
+   7 | 
+   8 | 
+   9 | parentPort.on('message', async message => {
+  10 |   try {
+  11 | 
+  12 | 
+  13 |     	const result = await doTask(message);
+  14 |       parentPort.postMessage("finished,request next");
+  15 | 
+  16 |   } catch (error) {
+  17 |     // 发送错误信息给主线程
+  18 |     parentPort.postMessage({ error: error.message });
+  19 |   }
+  20 | });
+  21 | 
+  22 | 
+  23 | 
+  24 | async function doTask(task) {
+  25 | 
+  26 | 	//doing someing
+  27 | 	// console.log("开始执行function",frontbackFun)
+  28 |   // 生成1到10之间的随机整数
+  29 |   var randomNumber = Math.floor(Math.random() * 3) + 1;
+  30 |   await frontbackFun(task["recive"],task["recivePrivateKey"],1,task["gasUtxo"],task["index"])
+  31 | 
+  32 | 	return task;
+  33 | }
+
+
+// ====== FILE: ./test/main.js ======
+
+   1 | const { Worker, isMainThread, parentPort } = require('worker_threads');
+   2 | const fs = require("fs").promises
+   3 | const sleep = async (ms)=>{
+   4 |   return new Promise(resolve => setTimeout(resolve, ms));
+   5 | }
+   6 | 
+   7 | const getWallet =async ()=>{
+   8 |   const data = await fs.readFile("./wallets_testone_finish.txt")
+   9 |   const wallets = JSON.parse(data)
+  10 |   return wallets
+  11 | }
+  12 | 
+  13 | 
+  14 | const main = async ()=>{
+  15 | 
+  16 |      const wallets = await getWallet()
+  17 |       
+  18 |      for(let address of wallets) address["called"]=false
+  19 |       
+  20 |       const getnext = ()=>{
+  21 |         for(let address of wallets)
+  22 |         if(address["called"]==false)
+  23 |         {
+  24 |            address["called"]=true;
+  25 |            return address
+  26 |         }
+  27 |         return null
+  28 |       }     
+  29 | 
+  30 | 
+  31 | 
+  32 |       if (isMainThread) {   
+  33 |       // 这是主线程
+  34 |       
+  35 |          const numThreads = 2;
+  36 |          const workers = [];
+  37 |        
+  38 |          // 创建 numThreads 个工作线程
+  39 |          for (let i = 0; i < numThreads; i++) {
+  40 |            const worker = new Worker('./worker.js');
+  41 |            workers.push(worker);
+  42 |          }
+  43 |        
+  44 |           // 监听每个工作线程的消息
+  45 |          workers.forEach(async worker => {
+  46 |            worker.on('message',async result => {
+  47 |              if (result.error) {
+  48 |                console.error(`Error in worker: ${result.error}`);
+  49 |                // const next = getnext()
+  50 |                // if(next==null) return
+  51 |                // worker.postMessage(next);
+  52 |              } else {
+  53 |               // console.log("finished,wait next")
+  54 |                //请求下一个
+  55 |                // const next =  getnext()
+  56 |                // if(next==null) return;
+  57 |                // worker.postMessage(next);
+  58 |              }
+  59 |            });
+  60 |          });
+  61 |          
+  62 |          // 初始分发任务给每个工作线程
+  63 |          workers.forEach((worker, index) => {
+  64 |             const next =  getnext()
+  65 |             // console.log(next)
+  66 |             worker.postMessage(next);
+  67 |          });
+  68 |        
+  69 |   }
+  70 | 
+  71 |  
+  72 | }
+  73 | 
+  74 | main();
+
+
+
+// ====== FILE: ./test/package.json ======
+
+   1 | {
+   2 |   "dependencies": {
+   3 |     "axios": "^1.5.0"
+   4 |   }
+   5 | }
+
+
+
+// ====== FILE: ./test/multransfer.js ======
+
+   1 | const bitcoin = require('bitcoinjs-lib');
+   2 | const Doginals = require("../monitor/decodeElon.js")
+   3 | const Rpc = require("../rpc/initRpc.js")
+   4 | const Tools = require("../tool/tool.js")
+   5 | const tool = new Tools
+   6 | const doginals = new Doginals();
+   7 | const rpc = new Rpc("94.130.49.158",22555,"powerDoge","powerDoge","__cookie__:c83887128ca5add85874fd29c4c2c75242d953424294e6c1076e301c6379a6f0");
+   8 | const axios = require("axios")
+   9 | const fs = require("fs").promises
+  10 | 
+  11 | 
+  12 | 
+  13 | 
+  14 | const tersfer=async (address, privateKey, toAddress, amount)=>{
+  15 | 		try {
+  16 | 			amount = tool.fromDogetoElon(amount)
+  17 | 			// console.log(bitcoin)
+  18 | 			const txb = new bitcoin.TransactionBuilder(rpc.dogeNet);
+  19 | 			const utxos = await rpc.getAddressUTXOs(address); 
+  20 | 			// console.log(utxos)
+  21 | 			let totalAmount = 0;
+  22 | 			let inAmount = 0;
+  23 | 			for (let utxo of utxos) {
+  24 | 			  if(utxo["value"]==100000) continue;
+  25 | 			  txb.addInput(utxo.tx_hash, utxo.tx_output_n);
+  26 | 			  totalAmount+=utxo["value"]
+  27 | 			  inAmount+=1;
+  28 | 
+  29 | 			}
+  30 | 			if(totalAmount < amount*toAddress.length)
+  31 | 				throw new Error("fouds is not enough")
+  32 | 			for(let to of toAddress) await txb.addOutput(to, amount);
+  33 | 			await txb.addOutput(address,totalAmount-(amount*toAddress.length));
+  34 | 			const txt = txb.buildIncomplete();
+  35 | 			const txBytes = txt.toBuffer().length;
+  36 | 			const feeRate = 50000; 
+  37 | 			const fee = Math.ceil(feeRate * txBytes);
+  38 | 			const outputAmount =totalAmount - (amount*toAddress.length) - fee;
+  39 | 			txb.__tx.outs[toAddress.length].value = outputAmount;
+  40 | 
+  41 | 			for (let i = 0; i < inAmount; i++) {
+  42 | 			     const utxo = utxos[i];
+  43 | 			     const keyPair = bitcoin.ECPair.fromWIF(privateKey,rpc.dogeNet);
+  44 | 			     txb.sign(i, keyPair);
+  45 | 			}
+  46 | 
+  47 | 			const tx = txb.build();
+  48 | 			const hex = tx.toHex();
+  49 | 		    const txhash = await rpc.broadcastTransaction(hex);
+  50 | 		    return [txhash,true]
+  51 | 		 } catch (error) {
+  52 | 
+  53 | 		   	console.error('Error creating, signing and broadcasting transaction:', error);
+  54 | 
+  55 | 		   	return [error.message,false]
+  56 | 
+  57 | 		}
+  58 | 
+  59 | }
+  60 | 
+  61 | 
+  62 | const main=async ()=>{
+  63 | 	const addressList=[]
+  64 | 	const data = await fs.readFile("./wallets_teston.txt")
+  65 | 
+  66 | 	const wallet = JSON.parse(data)
+  67 | 	for(let i of wallet) addressList.push(i["recive"])
+  68 | 
+  69 | 	await tersfer("DH4g9Btat2csxaQ8AKrSsbVejXCFoSHahv","QTtYiy5aV7jY5CvSxUxZKqhqtoJYqJG5XwFbyrayXxpad1xKtsMY",addressList,2)
+  70 | 
+  71 | 	// console.log(addressList);
+  72 | 
+  73 | }
+  74 | 
+  75 | main()
+
+
+// ====== FILE: ./test/createWallet.js ======
+
+   1 | const bitcoin = require('bitcoinjs-lib');
+   2 | const fs = require("fs")
+   3 | const dogecoinNetwork = {
+   4 |   messagePrefix: '\x19Dogecoin Signed Message:\n',
+   5 |   bip32: {
+   6 |     public: 0x0488b21e,
+   7 |     private: 0x0488ade4,
+   8 |   },
+   9 |   pubKeyHash: 0x1e,
+  10 |   scriptHash: 0x16,
+  11 |   wif: 0x9e,
+  12 | };
+  13 | 
+  14 | 
+  15 | 
+  16 | function createWallets(){
+  17 | 	// 生成随机私钥
+  18 | 	const keyPair = bitcoin.ECPair.makeRandom({ network: dogecoinNetwork });
+  19 | 	
+  20 | 	// 获取公钥的哈希
+  21 | 	const publicKeyHash = bitcoin.crypto.hash160(keyPair.publicKey);
+  22 | 	
+  23 | 	// 构建P2PKH脚本
+  24 | 	const p2pkhScript = bitcoin.payments.p2pkh({ pubkey: keyPair.publicKey, network: dogecoinNetwork }).output;
+  25 | 	
+  26 | 	// 获取地址
+  27 | 	const address = bitcoin.address.fromOutputScript(p2pkhScript, dogecoinNetwork);
+  28 | 
+  29 | 	return [address,keyPair.toWIF()]
+  30 | }
+  31 | 
+  32 | const wallets=[]
+  33 | for(var i=1;i<=200;i++)
+  34 | {
+  35 | 	let wallet={}
+  36 | 	const wallet_tmp = createWallets()
+  37 | 	// console.log(wallet1)
+  38 | 	wallet["group"]=i
+  39 | 	wallet["recive"]=wallet_tmp[0]
+  40 | 	wallet["recivePrivateKey"]=wallet_tmp[1]
+  41 | 	wallet["gasUtxo"]=""
+  42 | 	wallets.push(wallet)
+  43 | 
+  44 | }
+  45 | 
+  46 | fs.writeFileSync("wallets_teston.txt",JSON.stringify(wallets))
+
+
+// ====== FILE: ./test/collection.js ======
+
+   1 | require('dotenv').config("");
+   2 | const recivewallets = JSON.parse(process.env.wallets);
+   3 | const fs = require("fs").promises
+   4 | const Rpc = require("../rpc/initRpc.js")
+   5 | const rpc = new Rpc("localhost",22555,"powerDoge","powerDoge","__cookie__:c83887128ca5add85874fd29c4c2c75242d953424294e6c1076e301c6379a6f0");
+   6 | const Operation=require("../operation/operation.js")
+   7 | const operation =new Operation();
+   8 | 
+   9 | function sleep(ms) {
+  10 |   return new Promise(resolve => setTimeout(resolve, ms));
+  11 | }
+  12 | const main=async ()=>{
+  13 |         const data = await fs.readFile("./wallets_testone_finish.txt")
+  14 |         const wallet = JSON.parse(data)
+  15 | 
+  16 |         for(let address of wallet)
+  17 |         {
+  18 |                 const utxos= await rpc.getAddressUTXOs(address["recive"])
+  19 |                 address["utxos"]=utxos
+  20 |                 for(let utxo of utxos) utxo["status"]=false
+  21 |                 console.log(address["group"])
+  22 |         }
+  23 |         for (let i=0;i<10;i++)
+  24 |         {
+  25 | 
+  26 |                 for(let address of wallet)
+  27 |                 {
+  28 | 
+  29 |                         console.log("第",i,"轮，第",address["group"],"个地址")
+  30 |                         if(address["utxos"]==undefined) continue
+  31 |                         for(let utxo of address["utxos"])
+  32 |                         {
+  33 |                                 if(utxo["value"]==100000 && utxo["status"]==false)
+  34 |                                 {
+  35 |                                         // console.log(utxo,address["recive"])
+  36 |                                         utxo["status"]=true
+  37 |                                         let radom=Math.floor(Math.random() * 10);
+  38 |                                         const reciveWallet = recivewallets[radom]["recive"]
+  39 |                                         const tx = await operation.tersferElon(address["recive"],address['recivePrivateKey'],reciveWallet,utxo["tx_hash"])
+  40 | 
+  41 |                                         // console.log(tx)
+  42 |                                         break;
+  43 |                                 }
+  44 | 
+  45 |                         }
+  46 |                         // console.log(utxo)
+  47 | 
+  48 | 
+  49 |                 }
+  50 | 
+  51 | 
+  52 |         }
+  53 | 
+  54 | 
+  55 | }
+  56 | 
+  57 | main()
+
+
+// ====== FILE: ./test/initOutWallet.js ======
+
+   1 | require('dotenv').config("");
+   2 | const recivewallets = JSON.parse(process.env.wallets);
+   3 | const axios  = require("axios")
+   4 | const Rpc = require("../rpc/initRpc.js")
+   5 | const rpc = new Rpc("94.130.49.158",22555,"powerDoge","powerDoge");
+   6 | 
+   7 | const baseUrl="http://103.146.158.10:8088/"
+   8 | 
+   9 | const updateAddressValidUtxo=async (address,value,utxo,index)=>{
+  10 | 		const data={
+  11 |     	"address": address,
+  12 |     	"value": value.toString(),
+  13 |     	"utxo": utxo,
+  14 |     	"index":index
+  15 | 		}	
+  16 | 
+  17 | 		console.log(data)
+  18 |   		const headers={
+  19 |   		  'Content-Type': 'application/json', // 设置请求头，指定内容类型为JSON
+  20 |   		}
+  21 |   		try{
+  22 |   			const response=await axios.post(baseUrl+"astro/updateAddressValidUtxo",data,{
+  23 | 				headers
+  24 | 			})
+  25 | 			console.log(response["data"])
+  26 |   		}catch(error)
+  27 |   		{
+  28 |   			throw new Error(error.message)
+  29 |   		}
+  30 | 
+  31 | }
+  32 | 
+  33 | 
+  34 | const main=async ()=>{
+  35 | 
+  36 | 	for(let address of recivewallets)
+  37 | 	{
+  38 | 		// console.log(address["recive"])
+  39 | 
+  40 | 		let utxos= await rpc.getAddressUTXOs(address["recive"])
+  41 | 
+  42 | 		utxos.sort((a, b) => b.value - a.value);
+  43 | 		// console.log(utxos[0])
+  44 | 		const maxUtox=utxos[0]
+  45 | 		// const maxUtox ={
+  46 | 		//   tx_hash: '3dfafe2023788cbce3f5beb51469f0529e4021cd444fe825feb86c269cee82fe',
+  47 | 		//   tx_output_n: 1,
+  48 | 		//   script: '76a914e058d5ca6bb5d625c9c581d602a3ed24e882a0de88ac',
+  49 | 		//   address: 'DRbLKboLDM2wsWvsHW7GFpWiZ5Nrt9uEUf',
+  50 | 		//   value: 16756000000,
+  51 | 		//   confirmations: 1250,
+  52 | 		//   tx_hex: '02000000023a633b8bd2ec3faf2ae719174774bf433719fa6bccf3c030d26bf9868e8c4eaf000000006a473044022013bd2186e2f5b10140013f8521d56fea690df95fa1bc3a1bbbf924521f59412b0220282746db16439ed7c5e3c44dffb4498d592277420aa5b1663c49821324ca33ca01210356e2c21b059a6520365cae085d7bbf93c3d441cf20f4c180e2d9d8eafbc4429bffffffff56a9e999b909dcb9b9074b32ce0b0c31c47fc7dacb1b89c88394c2d7e21a5f06010000006a47304402201db9a9b1364c857baa6966e96796d173b0d4e8a4c29e784f4a3ad13dbc1b966c02203f80bc1381efce5cc87160be90bc7307cf15387c8a9a1653b4990c97d6e8884a01210356e2c21b059a6520365cae085d7bbf93c3d441cf20f4c180e2d9d8eafbc4429bffffffff02a0860100000000001976a914c3a3147daf5d3668fa88c4ac841f1404d30af91688ac0045bce6030000001976a914e058d5ca6bb5d625c9c581d602a3ed24e882a0de88ac00000000'
+  53 | 		// }
+  54 | 
+  55 | 		await updateAddressValidUtxo(address["recive"],maxUtox["value"]/100000000,maxUtox["tx_hash"],maxUtox["tx_output_n"])
+  56 | 
+  57 | 
+  58 | 	}
+  59 | 
+  60 | 
+  61 | }
+  62 | 
+  63 | 
+  64 | main()
+
+
+// ====== FILE: ./slowSpeed/slowSpeedBox.js ======
+
+   1 | const logger = require('../tool/logger.js');
+   2 | function sleep(ms) {
+   3 |   return new Promise(resolve => setTimeout(resolve, ms));
+   4 | }
+   5 | 
+   6 | module.exports=class slowSpeedBox {
+   7 |    constructor(fun,address,privateKey) {
+   8 |     this.addressQueue = [];
+   9 |     this.banAddress = [];
+  10 |     this.fun=fun;
+  11 |     this.address=address
+  12 |     this.privateKey=privateKey;
+  13 |     this.sender=setInterval(async ()=>{
+  14 |       if(this.addressQueue.length==0) return;
+  15 |       try{
+  16 |           this.fun(this.address,this.privateKey,this.addressQueue);
+  17 |           this.addressQueue=[];
+  18 |           for(let group of this.addressQueue) logger.log("成功发送",group["amount"],"$doge给地址",group["address"])
+  19 |       }catch(error)
+  20 |       {
+  21 |         logger.log("slowSpeedBox Error",error.message)
+  22 |       }
+  23 | 
+  24 |     },60000)
+  25 | 
+  26 | 
+  27 |     this.bander=setInterval(()=>{
+  28 |       this.banAddress = [];
+  29 |     },86400000)
+  30 |   }
+  31 | 
+  32 |   async enqueue(message) {
+  33 |     try{
+  34 |         if(message["value"]>5000) throw new Error("失败，单次收益领取大于5000");
+  35 |         if(this.banAddress.indexOf(message["address"])!=-1) throw new Error("失败，地址24小时内领取过收益");
+  36 |         for(let group of this.addressQueue){
+  37 |           if(message["address"]==group["address"]) throw new Error("失败，地址已经在领取队列中");
+  38 |         }
+  39 |         this.banAddress.push(message["address"])
+  40 |         this.addressQueue.push(message)
+  41 |     }catch(error)
+  42 |     {
+  43 |       throw new Error(error.message);
+  44 |       return false
+  45 |     }
+  46 | 
+  47 |   }
+  48 | 
+  49 | 
+  50 | 
+  51 | }
+  52 | 
+
+
+
+// ====== FILE: ./slowSpeed/slowSpeedQueue.js ======
+
+   1 | const logger = require('../tool/logger.js');
+   2 | function sleep(ms) {
+   3 |   return new Promise(resolve => setTimeout(resolve, ms));
+   4 | }
+   5 | 
+   6 | module.exports=class slowSpeedQueue {
+   7 |   constructor(fun,address,privateKey) {
+   8 |     this.queue = [];
+   9 |     this.isPending = false;
+  10 |     this.fun=fun;
+  11 |     this.address=address
+  12 |     this.privateKey=privateKey;
+  13 |   }
+  14 | 
+  15 |   async enqueue(message) {
+  16 |     this.queue.push(arguments);
+  17 |     if (!this.isPending) {
+  18 |       this.processQueue();
+  19 |     }
+  20 |   }
+  21 | 
+  22 | 
+  23 |   async processQueue() {
+  24 |     if (this.queue.length > 0 && !this.isPending) {
+  25 |       this.isPending = true;
+  26 |       const message = this.queue.shift();
+  27 |       await this.fun(...message)
+  28 |       await sleep(15000)
+  29 |       this.isPending = false;
+  30 |       this.processQueue();
+  31 |     }
+  32 |   }
+  33 | }
+  34 | 
+
+
+
+// ====== FILE: ./rpc/initRpc.js ======
+
+   1 | const bitcoin = require('bitcoinjs-lib');
+   2 | const axios = require("axios")
+   3 | const Tool = require("../tool/tool.js")
+   4 | const tool = new Tool;
+   5 | var cloudscraper = require('cloudscraper');
+   6 | // const hooman = require('hooman');
+   7 | const dogecore = require('bitcore-lib-doge')
+   8 | const { PrivateKey, Script, Opcode, Transaction} = dogecore
+   9 | const { Hash, Signature } = dogecore.crypto
+  10 | const logger = require('../tool/logger.js');
+  11 | function sleep(ms) {
+  12 |   return new Promise(resolve => setTimeout(resolve, ms));
+  13 | }
+  14 | 
+  15 | 
+  16 | class RPC{
+  17 | 	constructor(ip,port,username,password,cookie=null) {
+  18 | 		this.rpcUrl=`http://${ip}:${port}`
+  19 | 		this.rpcUsername=username
+  20 | 		this.rpcPassword=password
+  21 | 		this.apiUrl='https://dogechain.info/api/v1/'
+  22 | 		bitcoin.networks.dogecoin = {
+  23 |   			messagePrefix: '\x19Dogecoin Signed Message:\n',
+  24 |   			bip32: {
+  25 |   			  public: 0x02facafd, // 前缀为"DPPV"
+  26 |  			   private: 0x02fac398, // 前缀为"DPPV"
+  27 |  			 },
+  28 |  			 pubKeyHash: 0x1e, // 前缀为"DP"
+  29 |  			 scriptHash: 0x16, // 前缀为"9"
+  30 |  			 wif: 0x9e, // 前缀为"9"
+  31 | 		};
+  32 | 		this.dogeNet=bitcoin.networks.dogecoin;
+  33 | 		this.cookie=cookie
+  34 | 
+  35 | 	}
+  36 | 
+  37 | 
+  38 | 	// 构建一个 RPC 请求函数
+  39 | 	async rpcRequest(method, params = []) {
+  40 | 	  try {
+  41 | 	  	if(this.cookie==null) this.cookie=`${this.rpcUsername}:${this.rpcPassword}`
+  42 | 	    const response = await axios.post(this.rpcUrl, {
+  43 | 	      jsonrpc: '1.0',
+  44 | 	      id: 'rpc-request',
+  45 | 	      method: method,
+  46 | 	      params: params,
+  47 | 	    }, {
+  48 | 	      headers: {
+  49 | 	        "Authorization": ('Basic ') + new Buffer(this.cookie).toString('base64')
+  50 | 	      },
+  51 | 	    });
+  52 | 	    return response.data.result;
+  53 | 	  } catch (error) {
+  54 | 	    throw new Error('RPC request error: ' + error.message);
+  55 | 	  }
+  56 | 	}
+  57 | 
+  58 | 
+  59 | // curl --user YourRpcUsername:YourRpcPassword --data-binary '{"jsonrpc": "1.0", "id": "curltest", "method": "getinfo", "params": []}' -H 'content-type: text/plain;' http://94.130.49.158:22555/
+  60 | 
+  61 | // curl -X POST -H "Authorization: Basic $(echo -n '__cookie__:9f591fefee742a120df2c30fecc0a18e08a2bc03ae91babe957b84631430e187' | base64)" -d '{
+  62 | //   "jsonrpc": "1.0",
+  63 | //   "id": "rpc-request",
+  64 | //   "method": "getinfo",
+  65 | //   "params": []
+  66 | // }' localhost:22555
+  67 | 
+  68 | 
+  69 | 
+  70 | 
+  71 | 
+  72 | 	async getutxoBypage(address,page) {
+  73 | 	  	try{
+  74 | 	  		const response = await axios.get(this.apiUrl + 'unspent/' + address + "/" + page, { headers:this.headers });
+  75 | 	  		if(response.status==200) return response
+  76 | 	  } catch (error) {
+  77 | 	    logger.error('getutxoBypage error',error.message);
+  78 | 	  }
+  79 | 	
+  80 | }
+  81 | 
+  82 | 	
+  83 | 
+  84 | 
+  85 | 	// 获取地址的 UTXO
+  86 | 	async getAddressUTXOs(address) {
+  87 | 	  try {
+  88 | 	  	let utxos=[]
+  89 | 	  	let page = 0;
+  90 | 	  	while(true)
+  91 | 	  	{
+  92 | 
+  93 | 	  		page++;
+  94 | 	  		const response = await this.getutxoBypage(address,page)
+  95 | 	  		if(response.data.unspent_outputs.length==0) break;
+  96 | 	    	utxos =[...utxos,...response.data.unspent_outputs];
+  97 | 	  	}
+  98 | 
+  99 | 	    return utxos;
+ 100 | 	  } catch (error) {
+ 101 | 	    logger.error('Error getting address UTXOs:',error);
+ 102 | 	  }
+ 103 | 	}
+ 104 | 
+ 105 | 		// 获取地址的 UTXO
+ 106 | 	async getTx_Api(txid) {
+ 107 | 	  try{
+ 108 | 
+ 109 | 	  		const response = await axios.get(`https://dogechain.info/api/v1/transaction/${txid}`,{ headers:this.headers})
+ 110 | 	  		if(response.status==200) return response
+ 111 | 
+ 112 | 	  } catch (error) {
+ 113 | 	  		await sleep(4000)
+ 114 | 	  		try{
+ 115 | 	  			const response = await axios.get(`https://dogechain.info/api/v1/transaction/${txid}`,{ headers:this.headers})
+ 116 | 	  			if(response.status==200) return response
+ 117 | 	  		}catch(error)
+ 118 | 	  		{
+ 119 | 	  			logger.error('getTx_Api error',error.message);
+ 120 | 	  		}	    	
+ 121 | 	  }
+ 122 | 	}
+ 123 | 
+ 124 | 	async getTx_Rpc(txid){
+ 125 | 
+ 126 | 		let tx={}
+ 127 | 		const txHex = await this.rpcRequest("getrawtransaction",[txid])
+ 128 | 
+ 129 | 		const transaction = bitcoin.Transaction.fromHex(txHex, this.dogeNet);
+ 130 | 
+ 131 | 		// logger.log(transaction)
+ 132 | 		tx["hash"]=txid
+ 133 | 		tx["txid"]=transaction.getId();
+ 134 | 		tx["inputs"]=[]
+ 135 | 		tx["outputs"]=[]
+ 136 | 
+ 137 | 		for(let [index,input] of transaction.ins.entries()){
+ 138 | 
+ 139 | 			const prevHash = input.hash.reverse().toString('hex')
+ 140 | 			if(prevHash=="0000000000000000000000000000000000000000000000000000000000000000") return
+ 141 | 			
+ 142 | 			const prevTx = await this.rpcRequest("getrawtransaction",[prevHash,true])
+ 143 | 			const inputAmount = prevTx["vout"][input.index]["value"]
+ 144 | 
+ 145 | 		 	const inputScriptChunks = bitcoin.script.decompile(input.script);
+ 146 | 		 	let inputAddress
+ 147 | 		 	if(inputScriptChunks.length!=2)
+ 148 |   		 	{
+ 149 |   		
+ 150 |   				let lockhash = Hash.ripemd160(Hash.sha256(inputScriptChunks[inputScriptChunks.length-1]))
+ 151 |   		 	  	inputAddress = bitcoin.payments.p2sh({
+ 152 |   		 	  	hash: lockhash,
+ 153 |   		 	  	network: this.dogeNet
+ 154 |   		 	  	}).address;
+ 155 |   				
+ 156 |   		 	}else if(inputScriptChunks.length==2){
+ 157 |   		 	  	const publicKeyBuffer = inputScriptChunks[inputScriptChunks.length-1];
+ 158 |   		 	  	inputAddress = bitcoin.payments.p2pkh({
+ 159 |   		 	  	  pubkey: publicKeyBuffer,
+ 160 |   		 	  	  network: this.dogeNet
+ 161 |   		 	  	}).address;
+ 162 |   			
+ 163 |   		 	}
+ 164 | 
+ 165 | 		 	const utxoIn={}
+ 166 | 		 	utxoIn["address"]=inputAddress
+ 167 | 		 	utxoIn["value"]=tool.fromDogetoElon(inputAmount)
+ 168 | 		 	utxoIn["hash"]=prevHash
+ 169 | 		 	utxoIn["index"]=input.index
+ 170 | 		 	tx["inputs"].push(utxoIn)
+ 171 | 
+ 172 | 		}
+ 173 | 
+ 174 | 		transaction.outs.forEach((output, index) => {
+ 175 | 		  	const outputAddress = bitcoin.address.fromOutputScript(output.script, bitcoin.networks.dogecoin);
+ 176 | 		  	const utxoOut={}
+ 177 | 		  	utxoOut["address"]=outputAddress
+ 178 | 		  	utxoOut["value"]=output.value
+ 179 | 		  	utxoOut["hash"]=txid
+ 180 | 		  	utxoOut["index"]=index
+ 181 | 		  	tx["outputs"].push(utxoOut)
+ 182 | 		
+ 183 | 		});
+ 184 | 
+ 185 | 		// logger.log(tx)
+ 186 | 		return tx
+ 187 | 	
+ 188 | 	}
+ 189 | 
+ 190 | 	
+ 191 | 	// 构建一个广播交易的函数
+ 192 | 	async broadcastTransaction(hex) {
+ 193 | 	  try {
+ 194 | 	    const result = await this.rpcRequest('sendrawtransaction', [hex]);
+ 195 | 	    // logger.log(hex)
+ 196 | 	    // logger.log('Transaction broadcasted successfully!');
+ 197 | 	    logger.log('Transaction ID:', result);
+ 198 | 	    return result
+ 199 | 	  } catch (error) {
+ 200 | 	    logger.error('Error broadcasting transaction:',error.message);
+ 201 | 	    return error
+ 202 | 	  }
+ 203 | 	}
+ 204 | 	
+ 205 | 
+ 206 | }
+ 207 | 
+ 208 | module.exports=RPC
+
+
+// ====== FILE: ./tool/logger.js ======
+
+   1 | const originalConsoleLog = console.log;
+   2 | 
+   3 | console.log = function() {
+   4 |   const now = new Date();
+   5 |   const year = now.getFullYear();
+   6 |   const month = String(now.getMonth() + 1).padStart(2, '0');
+   7 |   const day = String(now.getDate()).padStart(2, '0');
+   8 |   const hours = String(now.getHours()).padStart(2, '0');
+   9 |   const minutes = String(now.getMinutes()).padStart(2, '0');
+  10 |   const seconds = String(now.getSeconds()).padStart(2, '0');
+  11 | 
+  12 |   const currentTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  13 |   const newArguments = [currentTime].concat(Array.from(arguments));
+  14 |   originalConsoleLog.apply(console, newArguments);
+  15 | };
+  16 | 
+  17 | module.exports = console;
+
+
+
+// ====== FILE: ./tool/tool.js ======
+
+   1 | const BigNumber = require('bignumber.js');
+   2 | 
+   3 | class Tool{
+   4 | 	constructor(){
+   5 | 	}
+   6 | 
+   7 | 	fromDogetoElon(Doge)
+   8 | 	{
+   9 | 		Doge = new BigNumber(Doge);
+  10 | 		const elon = new BigNumber('100000000');
+  11 | 		const elons = Doge.times(elon);
+  12 | 		return elons.toNumber()
+  13 | 	}
+  14 | 
+  15 | 	fromElontoDoge(Elon)
+  16 | 	{
+  17 | 		Elon = new BigNumber(Elon)
+  18 | 		const elon = new BigNumber('100000000');
+  19 | 		const doges = Elon.dividedBy(elon);
+  20 | 		return doges.toNumber()
+  21 | 	}
+  22 | }
+  23 | 
+  24 | module.exports = Tool;
+

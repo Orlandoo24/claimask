@@ -1,0 +1,25 @@
+rpc:
+  ip: "127.0.0.1"
+  port: 22555
+  user: "rpcuser"
+  password: "rpcpass"
+
+redis:
+  addr: "localhost:6379"
+  password:
+  db: 0
+
+server:
+  port: "8888"
+
+wallets:
+  - group: 1
+    receive: "DAddress1"
+    receivePrivate: "PrivKey1"
+  - group: 2
+    receive: "DAddress2"
+    receivePrivate: "PrivKey2"
+
+nft:
+  tax: 0.05
+  monitorUrl: "https://dogechain.info/api/v1/"

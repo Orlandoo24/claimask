@@ -1,0 +1,49 @@
+=== Go Build 编译结果 ===
+cmd/astro-server/main.go:1:1: expected 'package', found 'EOF'
+
+
+
+=== Go Vet 静态分析 ===
+cmd/astro-server/main.go:1:1: expected 'package', found 'EOF'
+
+
+
+=== GolangCI-Lint 检查 ===
+internal/monitor/service/nft_service.go:1: : # astro-orderx/internal/monitor/service
+internal/monitor/service/queue_mgr.go:16:18: not enough arguments in call to queues.NewPriorityQueue
+	have ()
+	want (int)
+internal/monitor/service/queue_mgr.go:16:18: cannot use queues.NewPriorityQueue() (value of type *queues.PriorityQueue) as queues.PriorityQueue value in struct literal
+internal/monitor/service/queue_mgr.go:17:17: cannot use queues.NewSpeedController(queues.Config{…}) (value of type *queues.SpeedController) as queues.SpeedController value in struct literal
+internal/monitor/service/queue_mgr.go:21:5: unknown field Interval in struct literal of type queues.RetryPolicy
+internal/monitor/service/queue_mgr.go:33:12: cannot use qm.priorityQueue (variable of type queues.PriorityQueue) as heap.Interface value in argument to heap.Push: queues.PriorityQueue does not implement heap.Interface (method Len has pointer receiver)
+internal/monitor/service/queue_mgr.go:34:26: cannot use qm.processTransaction (value of type func(to string, utxo interface{}) error) as *queues.Item value in argument to qm.speedControl.Enqueue (typecheck)
+// internal/monitor/service/nft_service.go
+internal/monitor/api/handler.go:4:2: could not import astro-orderx/internal/monitor/service (-: # astro-orderx/internal/monitor/service
+internal/monitor/service/queue_mgr.go:16:18: not enough arguments in call to queues.NewPriorityQueue
+	have ()
+	want (int)
+internal/monitor/service/queue_mgr.go:16:18: cannot use queues.NewPriorityQueue() (value of type *queues.PriorityQueue) as queues.PriorityQueue value in struct literal
+internal/monitor/service/queue_mgr.go:17:17: cannot use queues.NewSpeedController(queues.Config{…}) (value of type *queues.SpeedController) as queues.SpeedController value in struct literal
+internal/monitor/service/queue_mgr.go:21:5: unknown field Interval in struct literal of type queues.RetryPolicy
+internal/monitor/service/queue_mgr.go:33:12: cannot use qm.priorityQueue (variable of type queues.PriorityQueue) as heap.Interface value in argument to heap.Push: queues.PriorityQueue does not implement heap.Interface (method Len has pointer receiver)
+internal/monitor/service/queue_mgr.go:34:26: cannot use qm.processTransaction (value of type func(to string, utxo interface{}) error) as *queues.Item value in argument to qm.speedControl.Enqueue) (typecheck)
+	"astro-orderx/internal/monitor/service"
+	^
+main.go:22:8: undefined: utils.InitLogger (typecheck)
+	utils.InitLogger()
+	      ^
+cmd/astro-server/main.go:1:1: expected 'package', found 'EOF' (typecheck)
+
+^
+=== 测试编译检查 ===
+# astro-orderx/internal/monitor/service
+internal/monitor/service/queue_mgr.go:16:18: not enough arguments in call to queues.NewPriorityQueue
+	have ()
+	want (int)
+internal/monitor/service/queue_mgr.go:16:18: cannot use queues.NewPriorityQueue() (value of type *queues.PriorityQueue) as queues.PriorityQueue value in struct literal
+internal/monitor/service/queue_mgr.go:17:17: cannot use queues.NewSpeedController(queues.Config{…}) (value of type *queues.SpeedController) as queues.SpeedController value in struct literal
+internal/monitor/service/queue_mgr.go:21:5: unknown field Interval in struct literal of type queues.RetryPolicy
+internal/monitor/service/queue_mgr.go:33:12: cannot use qm.priorityQueue (variable of type queues.PriorityQueue) as heap.Interface value in argument to heap.Push: queues.PriorityQueue does not implement heap.Interface (method Len has pointer receiver)
+internal/monitor/service/queue_mgr.go:34:26: cannot use qm.processTransaction (value of type func(to string, utxo interface{}) error) as *queues.Item value in argument to qm.speedControl.Enqueue
+FAIL	astro-orderx [build failed]

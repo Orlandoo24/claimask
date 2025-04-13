@@ -1,0 +1,2185 @@
+=== PROJECT STRUCTURE ===
+./
+├── README.md
+├── cmd/
+│   └── astro-server/
+│       └── main.go
+├── collect.py
+├── comm/
+│   ├── constant/
+│   │   ├── blockchain.go
+│   │   └── constant.go
+│   ├── errno/
+│   │   ├── erron.go
+│   │   ├── error.go
+│   │   └── error_code.go
+│   ├── initialize/
+│   │   ├── init.go
+│   │   ├── mysql.go
+│   │   ├── redis.go
+│   │   └── rpc.go
+│   ├── middleware/
+│   │   └── middleware.go
+│   ├── response/
+│   │   └── response.go
+│   └── utils/
+│       ├── convert.go
+│       └── nft_decoder.go
+├── conf/
+│   ├── config.go
+│   └── config.yaml
+├── go.mod
+├── go.sum
+├── go.work
+├── go.work.sum
+├── go_project_code.txt
+├── golangci-lint.sh
+├── internal/
+│   └── monitor/
+│       ├── api/
+│       ├── dao/
+│       ├── model/
+│       └── service/
+├── js_project_code.txt
+├── lint_results.txt
+├── main.go
+├── pkg/
+│   ├── dogechain/
+│   │   ├── rpc_client.go
+│   │   └── tx_builder.go
+│   └── queues/
+│       ├── priority_queue.go
+│       ├── slowSpeedQueue.go
+│       └── speed_controller.go
+├── project_code.txt
+├── scripts/
+│   └── dev.sh
+└── slowSpeed/
+    ├── slowSpeedBox.js
+    └── slowSpeedQueue.js
+
+22 directories, 36 files
+
+
+
+# ====== FILE: ./golangci-lint.sh ======
+
+echo '#!/bin/bash
+golangci-lint run ./... --out-format=tab > ~/Desktop/lint_results.txt 2>&1
+echo "Lint 结果已保存到桌面 lint_results.txt"
+' > ~/run_lint.sh
+
+
+# ====== FILE: ./README.md ======
+
+根据区块链支付系统特点，我为您设计以下Go项目结构：
+
+```markdown
+# astro-orderx Go项目重构结构
+
+## 目录结构
+```bash
+.
+├── cmd
+│   ├── monitor-server/      # 监控服务入口
+│   └── api-server/         # API服务入口
+├── internal
+│   └── monitor              # 监控业务核心模块
+│       ├── api             # HTTP接口层
+│       │   └── handler.go  # 支付回调/交易查询等接口实现
+│       ├── service         # 业务逻辑
+│       │   ├── tx_monitor.go       # 交易监控（原monitorPay.js）
+│       │   ├── nft_service.go      # NFT转移处理（原nftTransfer）
+│       │   └── utxo_service.go     # UTXO管理（原operation.js）
+│       ├── dao             # 数据访问
+│       │   ├── rpc_client.go       # 区块链节点交互（原initRpc.js）
+│       │   └── explorer_client.go  # 区块浏览器交互
+│       ├── model
+│       │   ├── dto         # 业务实体
+│       │   │   ├── transaction.go  # 交易结构体
+│       │   │   └── nft.go          # NFT元数据
+│       │   └── po          # 持久化对象
+│       │       └── utxo.go # UTXO存储结构
+│       └── router
+│           └── router.go   # 路由配置（原apiServer.js）
+├── pkg
+│   ├── dogecore           # Dogecoin核心库封装
+│   │   ├── decoder.go      # 交易解码（原decodeElon.js）
+│   │   └── script.go      # 脚本解析工具
+│   └── utils
+│       ├── converter       # 单位转换工具（原tool.js）
+│       └── queue           # 交易队列（原slowSpeed/）
+├── configs
+│   ├── config.yaml         # 配置文件（原.env）
+│   └── dogechain.go        # 链参数配置
+├── go.mod
+├── go.sum
+└── docs
+    └── api.md             # API文档
+```
+
+## 核心模块映射
+
+### 1. 监控服务 (monitor/service)
+
+```go
+// tx_monitor.go
+type BlockMonitor struct {
+    rpcClient      *dogecore.RPCClient
+    nftMap         sync.Map       // 替换原JS的Map
+    taxRate        float64
+    callbackURL    string
+}
+
+// 保持原JavaScript版的核心逻辑
+func (m *BlockMonitor) ProcessTransaction(tx *model.Transaction) {
+    // 实现地址支付检测逻辑（原AddressPay）
+    // NFT状态更新逻辑（原nftTransfer）
+}
+
+// 实现双通道监控
+func (m *BlockMonitor) StartDualMonitor(ctx context.Context) {
+    go m.listenNodeWebsocket()  // 节点websocket监听
+    go m.pollBlockExplorer()    // 区块浏览器轮询
+}
+```
+
+### 2. RPC客户端 (pkg/dogecore)
+
+```go
+// rpc_client.go
+type DogeClient struct {
+    endpoint    string
+    httpClient  *http.Client      // 带重试机制
+    chainParams *chaincfg.Params  // 区块链网络参数
+}
+
+// 保持与JS版相同的UTXO获取逻辑
+func (c *DogeClient) GetUTXOs(address string) ([]model.UTXO, error) {
+    // 实现多页查询逻辑（原getutxoBypage）
+}
+```
+
+### 3. 交易队列 (pkg/utils/queue)
+
+```go
+// tx_queue.go
+type SlowQueue struct {
+    jobs       chan *TransferJob  // 带缓冲通道实现队列
+    rateLimit  time.Duration      // 15秒间隔控制
+    rpcClient  *dogecore.RPCClient
+}
+
+// 保持原有速率控制逻辑
+func (q *SlowQueue) StartWorker() {
+    for job := range q.jobs {
+        q.processTransfer(job)
+        time.Sleep(q.rateLimit)
+    }
+}
+```
+
+## 监控服务初始化流程
+
+```mermaid
+graph TD
+    A[加载配置] --> B[初始化RPC客户端]
+    B --> C[加载NFT元数据]
+    C --> D[启动交易监控]
+    D --> E[注册HTTP路由]
+    E --> F[启动队列系统]
+```
+
+## 关键优化点
+
+1. **并发安全设计**
+
+```go
+// 使用sync.Map替代JS的Map
+var nftUtxoMap sync.Map
+
+func (m *BlockMonitor) UpdateNftUtxo(txHash string, nftID int) {
+    nftUtxoMap.Store(txHash, nftID) 
+}
+```
+
+2. **配置热加载**
+
+```go
+type MonitorConfig struct {
+    CheckInterval  time.Duration `yaml:"check_interval"`
+    TaxRate        float64       `yaml:"tax_rate"`
+    BackupEndpoint string       `yaml:"backup_endpoint"`
+}
+
+func LoadConfig() (*MonitorConfig, error) {
+    // 使用viper实现配置自动加载
+}
+```
+
+3. **日志追踪增强**
+
+```go
+func LogTxFlow(tx *model.Transaction) {
+    log.WithFields(log.Fields{
+        "tx_hash": tx.Hash,
+        "amount":  tx.Amount,
+        "from":    tx.FromAddress,
+        "to":      tx.ToAddress,
+    }).Info("Transaction processed")
+}
+```
+
+需要我继续展开哪个模块的具体实现细节？或是需要调整目录结构中的某些部分？
+
+
+
+
+# ====== FILE: ./main.go ======
+
+package main
+
+import (
+	"astro-orderx/comm/initialize"
+	"astro-orderx/comm/utils"
+	"astro-orderx/internal/monitor/api"
+	"fmt"
+
+	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
+	"go.uber.org/zap"
+)
+
+func main() {
+	// 初始化配置
+	viper.SetConfigFile("./conf/config.yaml")
+	if err := viper.ReadInConfig(); err != nil {
+		panic(fmt.Sprintf("配置文件读取失败: %v", err))
+	}
+
+	// 初始化日志
+	utils.InitLogger()
+
+	// 初始化RPC连接
+	rpcClient := initialize.InitDogecoinRPC(
+		viper.GetString("rpc.ip"),
+		viper.GetInt("rpc.port"),
+		viper.GetString("rpc.user"),
+		viper.GetString("rpc.password"),
+	)
+
+	// 初始化Redis
+	redisClient := initialize.InitRedis(
+		viper.GetString("redis.addr"),
+		viper.GetString("redis.password"),
+		viper.GetInt("redis.db"),
+	)
+
+	// 创建Gin引擎
+	router := gin.Default()
+	api.RegisterRoutes(router, rpcClient, redisClient)
+
+	// 启动服务
+	port := viper.GetString("server.port")
+	zap.L().Info("服务启动成功", zap.String("port", port))
+	if err := router.Run(":" + port); err != nil {
+		zap.L().Fatal("服务启动失败", zap.Error(err))
+	}
+}
+
+
+
+# ====== FILE: ./cmd/astro-server/main.go ======
+
+
+
+
+# ====== FILE: ./internal/monitor/dao/nft_dao.go ======
+
+package dao
+
+import (
+	"astro-orderx/internal/monitor/model/po"
+
+	"gorm.io/gorm"
+)
+
+type NFTDao interface {
+	UpdateNFTStatus(nft *po.NFTPO) error
+	GetNFTByUTXO(utxoHash string) (*po.NFTPO, error)
+}
+
+type NFTDaoImpl struct {
+	db *gorm.DB
+}
+
+func NewNFTDao(db *gorm.DB) NFTDao {
+	return &NFTDaoImpl{db: db}
+}
+
+func (d *NFTDaoImpl) UpdateNFTStatus(nft *po.NFTPO) error {
+	return d.db.Where("utxo_hash = ?", nft.UtxoHash).
+		Assign(map[string]interface{}{
+			"owner_address": nft.OwnerAddress,
+			"tax_status":    nft.TaxStatus,
+			"tx_amt":        nft.TxAmt,
+		}).FirstOrCreate(nft).Error
+}
+
+func (d *NFTDaoImpl) GetNFTByUTXO(utxoHash string) (*po.NFTPO, error) {
+	var nft po.NFTPO
+	result := d.db.Where("utxo_hash = ?", utxoHash).First(&nft)
+	return &nft, result.Error
+}
+
+
+
+# ====== FILE: ./internal/monitor/dao/utxo_dao.go ======
+
+package dao
+
+import (
+	"astro-orderx/internal/monitor/model/po"
+
+	"gorm.io/gorm"
+)
+
+type UTXODao interface {
+	GetAddressValidUtxo(address string) (*po.UTXOPO, error)
+	UpdateUTXOState(utxo *po.UTXOPO) error
+}
+
+type UTXODaoImpl struct {
+	db *gorm.DB
+}
+
+func NewUTXODao(db *gorm.DB) UTXODao {
+	return &UTXODaoImpl{db: db}
+}
+
+func (d *UTXODaoImpl) GetAddressValidUtxo(address string) (*po.UTXOPO, error) {
+	var utxo po.UTXOPO
+	result := d.db.Where("address = ? AND spent = ?", address, false).
+		Order("value DESC").First(&utxo)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &utxo, nil
+}
+
+func (d *UTXODaoImpl) UpdateUTXOState(utxo *po.UTXOPO) error {
+	return d.db.Model(utxo).Updates(map[string]interface{}{
+		"spent":   utxo.Spent,
+		"tx_hash": utxo.TxHash,
+		"index":   utxo.Index,
+	}).Error
+}
+
+
+
+# ====== FILE: ./internal/monitor/model/dto/nft_dto.go ======
+
+package dto
+
+type NFTUpdateRequest struct {
+	NFTID        string `json:"nft_id" binding:"required"`
+	UtxoHash     string `json:"nft_utxo" binding:"required"`
+	OwnerAddress string `json:"owner_address"`
+	TaxStatus    int    `json:"tax_status"` // 0-未缴税 1-已缴税
+	TxAmt        int64  `json:"tx_amt"`     // 交易金额（ELON）
+}
+
+
+
+# ====== FILE: ./internal/monitor/model/dto/tx_dto.go ======
+
+package dto
+
+type TxInput struct {
+	Address string `json:"address"`
+	Value   int64  `json:"value"`
+	TxHash  string `json:"tx_hash"`
+	Index   uint32 `json:"index"`
+}
+
+type TxOutput struct {
+	Address string `json:"address"`
+	Value   int64  `json:"value"`
+}
+
+type TxDTO struct {
+	Hash    string     `json:"hash"`
+	Inputs  []TxInput  `json:"inputs"`
+	Outputs []TxOutput `json:"outputs"`
+}
+
+
+
+# ====== FILE: ./internal/monitor/model/po/utxo_po.go ======
+
+package po
+
+type UTXOPO struct {
+	ID      uint   `gorm:"primaryKey"`
+	Address string `gorm:"index"`
+	TxHash  string `gorm:"size:64;uniqueIndex"`
+	Index   uint32 `gorm:"index"`
+	Value   int64  // 单位：ELON
+	Spent   bool   `gorm:"default:false"`
+}
+
+type NFTPO struct {
+	NFTID        string `gorm:"primaryKey;size:64"` // 唯一标识符
+	UtxoHash     string `gorm:"size:64;uniqueIndex"`
+	OwnerAddress string `gorm:"size:34"`   // 当前所有者
+	TaxStatus    int    `gorm:"default:0"` // 0-未缴税 1-已缴税
+	TxAmt        int64  `gorm:"default:0"` // 交易金额（ELON）
+	GTID         string `gorm:"size:128"`  // 全局交易标识
+}
+
+type WalletGroupPO struct {
+	GroupID      int    `gorm:"primaryKey"`
+	ReceiveAddr  string `gorm:"size:34;uniqueIndex"` // Dogecoin地址
+	PrivateKey   string `gorm:"type:text"`           // 加密存储
+	CurrentUTXO  string `gorm:"size:64"`             // 当前使用的UTXO
+	LastSyncTime int64  // 最后同步时间戳
+}
+
+
+
+# ====== FILE: ./internal/monitor/api/handler.go ======
+
+package api
+
+import (
+	"astro-orderx/internal/monitor/service"
+
+	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
+)
+
+// PaymentHandler 支付处理器
+type PaymentHandler struct {
+	monitorSvc service.MonitorService
+}
+
+// NewPaymentHandler 创建支付处理器
+func NewPaymentHandler(svc service.MonitorService) *PaymentHandler {
+	return &PaymentHandler{monitorSvc: svc}
+}
+
+// HandlePaymentCallback 处理支付回调
+func (h *PaymentHandler) HandlePaymentCallback(c *gin.Context) {
+	var req struct {
+		UserURL   string `json:"userUrl"`
+		PayAmount int64  `json:"payAmt"`
+		TxID      string `json:"txId"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		zap.L().Error("支付回调参数绑定失败", zap.Error(err))
+		c.JSON(400, gin.H{"code": 4001, "msg": "参数格式错误"})
+		return
+	}
+
+	if err := h.monitorSvc.ProcessPayment(c.Request.Context(), req.UserURL, req.PayAmount, req.TxID); err != nil {
+		zap.L().Warn("支付处理失败", zap.String("txid", req.TxID), zap.Error(err))
+		c.JSON(500, gin.H{"code": 5001, "msg": "支付处理失败"})
+		return
+	}
+
+	c.JSON(200, gin.H{"code": 0, "msg": "处理成功"})
+}
+
+// GetNFTStatus 获取NFT状态
+func (h *PaymentHandler) GetNFTStatus(c *gin.Context) {
+	txid := c.Param("txid")
+	if txid == "" {
+		c.JSON(400, gin.H{"code": 4001, "msg": "参数错误"})
+		return
+	}
+
+	status, err := h.monitorSvc.GetNFTStatus(c.Request.Context(), txid)
+	if err != nil {
+		zap.L().Warn("获取NFT状态失败", zap.String("txid", txid), zap.Error(err))
+		c.JSON(500, gin.H{"code": 5001, "msg": "获取NFT状态失败"})
+		return
+	}
+
+	c.JSON(200, gin.H{"code": 0, "msg": "success", "data": status})
+}
+
+
+
+# ====== FILE: ./internal/monitor/api/router.go ======
+
+package api
+
+import (
+	"astro-orderx/internal/monitor/service"
+
+	"github.com/gin-gonic/gin"
+)
+
+func RegisterRoutes(router *gin.Engine, rpcClient interface{}, redisClient interface{}) {
+	monitorSvc := service.NewMonitorService(
+		service.NewTxMonitor(rpcClient, redisClient),
+		service.NewQueueManager(redisClient),
+	)
+
+	handler := NewPaymentHandler(monitorSvc)
+
+	v1 := router.Group("/api/v1")
+	{
+		v1.POST("/pay-callback", handler.HandlePaymentCallback)
+		v1.GET("/nft-status/:txid", handler.GetNFTStatus)
+	}
+}
+
+
+
+# ====== FILE: ./internal/monitor/service/tx_monitor.go ======
+
+// internal/monitor/service/tx_monitor.go
+package service
+
+import (
+	"context"
+	"sync"
+	"time"
+
+	"astro-orderx/pkg/dogechain"
+
+	"go.uber.org/zap"
+)
+
+// MonitorConfig 监控配置
+type MonitorConfig struct {
+	WalletGroups      []string      // 监控的钱包地址组
+	BlockPollInterval time.Duration // 区块轮询间隔
+	WebsocketEndpoint string        // WebSocket端点
+}
+
+// PaymentService 支付服务
+type PaymentService struct {
+	callbackURL string   // 支付回调URL
+	processors  []string // 支付处理器列表
+}
+
+// Process 处理支付
+func (p *PaymentService) Process(ctx context.Context, from string, amount int64, txHash string) error {
+	// 简化版支付处理逻辑
+	zap.L().Info("处理支付交易",
+		zap.String("from", from),
+		zap.Int64("amount", amount),
+		zap.String("txHash", txHash))
+
+	// 实际项目中应该实现支付处理逻辑
+	return nil
+}
+
+// TxMonitor 交易监控器
+type TxMonitor struct {
+	rpcClient     *dogechain.RPCClient
+	nftSvc        *NFTService
+	paymentSvc    *PaymentService
+	config        *MonitorConfig
+	ctx           context.Context
+	cancel        context.CancelFunc
+	nftMap        sync.Map
+	monitorAddrs  []string
+	lastBlockHash string
+}
+
+// NewTxMonitor 创建交易监控器
+func NewTxMonitor(rpc *dogechain.RPCClient, cfg *MonitorConfig) *TxMonitor {
+	ctx, cancel := context.WithCancel(context.Background())
+
+	return &TxMonitor{
+		rpcClient:    rpc,
+		config:       cfg,
+		ctx:          ctx,
+		cancel:       cancel,
+		monitorAddrs: cfg.WalletGroups,
+		paymentSvc:   &PaymentService{callbackURL: "http://localhost/callback"},
+	}
+}
+
+// isNFTOperation 判断是否为NFT操作
+func (m *TxMonitor) isNFTOperation(tx *dogechain.TxDetail) bool {
+	for _, out := range tx.Vout {
+		// NFT标志：100,000 ELON (0.001 DOGE)
+		if out.Value == 0.001 {
+			return true
+		}
+	}
+	return false
+}
+
+// handlePayment 处理支付
+func (m *TxMonitor) handlePayment(tx *dogechain.TxDetail) error {
+	var inOur, outOur bool
+	var senderAddr string
+
+	// 检查输入是否包含我们的地址
+	for _, in := range tx.Vin {
+		for _, addr := range in.Addresses {
+			if contains(m.monitorAddrs, addr) {
+				inOur = true
+				break
+			}
+		}
+		if inOur {
+			break
+		}
+		// 记录第一个输入地址作为发送者
+		if len(in.Addresses) > 0 && senderAddr == "" {
+			senderAddr = in.Addresses[0]
+		}
+	}
+
+	// 如果输入不是我们的地址，检查输出
+	if !inOur {
+		var total int64
+		for _, out := range tx.Vout {
+			for _, addr := range out.ScriptPubKey.Addresses {
+				if contains(m.monitorAddrs, addr) {
+					outOur = true
+					total += int64(out.Value * 100000000) // 转换为ELON单位
+				}
+			}
+		}
+
+		// 如果输出包含我们的地址，处理为支付
+		if outOur {
+			return m.paymentSvc.Process(context.Background(),
+				senderAddr,
+				total,
+				tx.Hash,
+			)
+		}
+	}
+	return nil
+}
+
+// StartDualMonitor 启动双通道监控
+func (m *TxMonitor) StartDualMonitor() {
+	go m.processNodeWebsocket()
+	go m.pollBlockExplorer()
+}
+
+// processNodeWebsocket 处理节点WebSocket消息
+func (m *TxMonitor) processNodeWebsocket() {
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			if err := m.checkNewBlocks(); err != nil {
+				zap.L().Warn("区块处理错误", zap.Error(err))
+			}
+		case <-m.ctx.Done():
+			return
+		}
+	}
+}
+
+// pollBlockExplorer 轮询区块浏览器
+func (m *TxMonitor) pollBlockExplorer() {
+	ticker := time.NewTicker(m.config.BlockPollInterval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			// 实现区块浏览器API调用
+			zap.L().Debug("轮询区块浏览器")
+		case <-m.ctx.Done():
+			return
+		}
+	}
+}
+
+// checkNewBlocks 检查新区块
+func (m *TxMonitor) checkNewBlocks() error {
+	// 实现检查新区块逻辑
+	zap.L().Debug("检查新区块")
+	return nil
+}
+
+// contains 辅助函数：检查数组是否包含指定值
+func contains(arr []string, val string) bool {
+	for _, v := range arr {
+		if v == val {
+			return true
+		}
+	}
+	return false
+}
+
+
+
+# ====== FILE: ./internal/monitor/service/nft_service.go ======
+
+// internal/monitor/service/nft_service.go
+package service
+
+import (
+	"astro-orderx/internal/monitor/dao"
+	"astro-orderx/internal/monitor/model/po"
+	"astro-orderx/pkg/dogechain"
+	"errors"
+	"sync"
+)
+
+// NFTDecoder 解码NFT元数据
+type NFTDecoder struct {
+	monitorAddr string
+}
+
+// NewNFTDecoder 创建NFT解码器
+func NewNFTDecoder() *NFTDecoder {
+	return &NFTDecoder{
+		monitorAddr: "DTcuJ6N5QEoQUygTv8CnKzn3DUS7KhaDR2", // 默认监控地址
+	}
+}
+
+// GetGTID 从交易Hash获取全局交易ID
+func (d *NFTDecoder) GetGTID(txHash string) (string, error) {
+	// 简化版实现，实际应调用区块链节点API获取交易详情并解析
+	if txHash == "" {
+		return "", errors.New("empty transaction hash")
+	}
+
+	// 仅作为演示，实际应该解析交易脚本获取GTID
+	return "nft:" + txHash, nil
+}
+
+// NFTService NFT服务
+type NFTService struct {
+	decoder     *NFTDecoder
+	dao         dao.NFTDao
+	taxRate     float64
+	cache       sync.Map
+	monitorAddr string
+}
+
+// NewNFTService 创建NFT服务
+func NewNFTService(dao dao.NFTDao, tax float64) *NFTService {
+	return &NFTService{
+		decoder:     NewNFTDecoder(),
+		dao:         dao,
+		taxRate:     tax,
+		monitorAddr: "DTcuJ6N5QEoQUygTv8CnKzn3DUS7KhaDR2", // 默认监控地址
+	}
+}
+
+// ProcessTransfer 处理NFT转移交易
+func (s *NFTService) ProcessTransfer(tx *dogechain.TxDetail) error {
+	gtid, err := s.decoder.GetGTID(tx.Hash)
+	if err != nil || gtid == "" {
+		return err
+	}
+
+	nftID, ok := s.cache.Load(gtid)
+	if !ok {
+		return nil
+	}
+
+	var taxAmt, total int64
+	inputs := make(map[string]struct{})
+
+	for _, in := range tx.Vin {
+		for _, addr := range in.Addresses {
+			inputs[addr] = struct{}{}
+		}
+	}
+
+	var owner string
+	for _, out := range tx.Vout {
+		// 检查是否为NFT标记输出
+		if out.Value == 100000 {
+			if len(out.ScriptPubKey.Addresses) > 0 {
+				owner = out.ScriptPubKey.Addresses[0]
+			}
+		}
+
+		// 检查是否为税收
+		if len(out.ScriptPubKey.Addresses) > 0 {
+			addr := out.ScriptPubKey.Addresses[0]
+			if _, exists := inputs[addr]; !exists {
+				if addr == s.monitorAddr {
+					taxAmt += int64(out.Value * 100000000) // 转换为ELON单位
+				}
+				total += int64(out.Value * 100000000)
+			}
+		}
+	}
+
+	taxStatus := 0
+	if total > 0 && float64(taxAmt)/float64(total) >= s.taxRate {
+		taxStatus = 1
+	}
+
+	// 创建NFT更新对象
+	nftPO := &po.NFTPO{
+		NFTID:        nftID.(string),
+		UtxoHash:     tx.Hash,
+		OwnerAddress: owner,
+		TaxStatus:    taxStatus,
+		TxAmt:        total - taxAmt,
+	}
+
+	// 更新NFT状态
+	return s.dao.UpdateNFTStatus(nftPO)
+}
+
+
+
+# ====== FILE: ./internal/monitor/service/queue_mgr.go ======
+
+package service
+
+import (
+	"astro-orderx/pkg/queues"
+	"container/heap"
+	"time"
+)
+
+type QueueManager struct {
+	priorityQueue queues.PriorityQueue
+	speedControl  queues.SpeedController
+}
+
+func NewQueueManager(redisClient interface{}) *QueueManager {
+	return &QueueManager{
+		priorityQueue: queues.NewPriorityQueue(),
+		speedControl: queues.NewSpeedController(queues.Config{
+			MaxConcurrent: 10,
+			RetryPolicy: queues.RetryPolicy{
+				MaxRetries: 3,
+				Interval:   15 * time.Second,
+			},
+		}),
+	}
+}
+
+// EnqueueTransfer 添加交易到队列 [5](@ref)
+func (qm *QueueManager) EnqueueTransfer(priority int64, txData interface{}) {
+	item := &queues.Item{
+		Value:    txData,
+		Priority: priority,
+	}
+	heap.Push(qm.priorityQueue, item)
+	qm.speedControl.Enqueue(qm.processTransaction)
+}
+
+// processTransaction 交易处理核心逻辑
+func (qm *QueueManager) processTransaction(to string, utxo interface{}) error {
+	// 实现交易构建和广播逻辑
+	// 包含重试机制和速率控制 [5](@ref)
+	return nil
+}
+
+
+
+# ====== FILE: ./comm/middleware/middleware.go ======
+
+package middleware
+
+import (
+	"astro-orderx/comm/initialize"
+
+	"github.com/gin-gonic/gin"
+)
+
+// Placeholder file for middleware package.
+
+// InitMiddleware 初始化全局中间件
+func InitMiddleware(server *initialize.Server) {
+	// 在这里添加全局中间件
+	// 例如：server.Use(gin.Logger())
+}
+
+// AuthMiddleware bk auth middleware
+func AuthMiddleware(actions ...string) gin.HandlerFunc {
+	return nil
+}
+
+
+
+# ====== FILE: ./comm/errno/erron.go ======
+
+// Package errno 定义错误码，错误码统一放在这边集中管理，不允许在各自包中定义错误码
+package errno
+
+import "fmt"
+
+// ErrNo 定义异常码对象
+type ErrNo struct {
+	Code int    `json:"code"`
+	Msg  string `json:"msg"`
+}
+
+// Error 返回错误对象
+func (e *ErrNo) Error() string {
+	return fmt.Sprintf("[%d] %s", e.Code, e.Msg)
+}
+
+var (
+	SUCCESS = ErrNo{0, "success"}
+
+	ERR_BAD_REQUEST     = &ErrNo{400, "bad request error"}
+	ERR_UNAUTHORIZED    = &ErrNo{401, "unauthorized error"}
+	ERR_FORBIDDEN       = &ErrNo{403, "forbidden error"}
+	ERR_CONFLICT        = &ErrNo{409, "conflict error"}
+	ERR_INTERNAL_SERVER = &ErrNo{500, "internal server error"}
+)
+
+
+
+# ====== FILE: ./comm/errno/error.go ======
+
+package errno
+
+import "fmt"
+
+type BusinessError struct {
+	Code    int
+	Message string
+	Detail  interface{}
+}
+
+func (e *BusinessError) Error() string {
+	return fmt.Sprintf("[%d]%s: %v", e.Code, e.Message, e.Detail)
+}
+
+func NewError(code int, detail interface{}) error {
+	return &BusinessError{
+		Code:    code,
+		Message: GetMsg(code),
+		Detail:  detail,
+	}
+}
+
+
+
+# ====== FILE: ./comm/errno/error_code.go ======
+
+package errno
+
+// 错误码定义
+const (
+	SuccessCode               = 0
+	NFTTransferError          = 5001
+	UTXOInsufficientError     = 5002
+	RPCConnectionError        = 5003
+	TransactionBroadcastError = 5004
+)
+
+var codeMsg = map[int]string{
+	SuccessCode:               "成功",
+	NFTTransferError:          "NFT转移失败",
+	UTXOInsufficientError:     "UTXO余额不足",
+	RPCConnectionError:        "区块链节点连接失败",
+	TransactionBroadcastError: "交易广播失败",
+}
+
+func GetMsg(code int) string {
+	return codeMsg[code]
+}
+
+
+
+# ====== FILE: ./comm/response/response.go ======
+
+// Package response 封装响应结构
+package response
+
+import (
+	"astro-orderx/comm/constant"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+)
+
+const (
+	ERROR   = -1
+	SUCCESS = 0
+)
+
+// Response 响应结构体
+type Response struct {
+	Code    int         `json:"code"`
+	Data    interface{} `json:"data"`
+	Msg     string      `json:"msg"`
+	TraceID string      `json:"traceId"`
+}
+
+// Result trace Id
+func Result(code int, data interface{}, msg string, c *gin.Context) {
+	c.Set(constant.ERROR_CODE, code)
+	traceID := c.GetString(constant.TRACKING_ID)
+	// 开始时间
+	c.JSON(http.StatusOK, Response{
+		Code:    code,
+		Data:    data,
+		Msg:     msg,
+		TraceID: traceID,
+	})
+}
+
+// Ok result
+func Ok(c *gin.Context) {
+	Result(SUCCESS, map[string]interface{}{}, "操作成功", c)
+}
+
+// OkWithMessage result
+func OkWithMessage(c *gin.Context, message string) {
+	Result(SUCCESS, map[string]interface{}{}, message, c)
+}
+
+// OkWithData result
+func OkWithData(c *gin.Context, data interface{}) {
+	Result(SUCCESS, data, "操作成功", c)
+}
+
+// OkWithDetailed result
+func OkWithDetailed(c *gin.Context, data interface{}, message string) {
+	Result(SUCCESS, data, message, c)
+}
+
+// Fail result
+func Fail(c *gin.Context, code int) {
+	Result(code, map[string]interface{}{}, "操作失败", c)
+}
+
+// FailWithMessage result
+func FailWithMessage(c *gin.Context, code int, message string) {
+	Result(code, map[string]interface{}{}, message, c)
+}
+
+
+
+# ====== FILE: ./comm/initialize/redis.go ======
+
+package initialize
+
+import (
+	"log"
+
+	"github.com/go-redis/redis"
+)
+
+// InitRedis 初始化Redis连接
+func InitRedis(addr, password string, db int) *redis.Client {
+	client := redis.NewClient(&redis.Options{
+		Addr:     addr,
+		Password: password,
+		DB:       db,
+	})
+
+	// 测试连接
+	_, err := client.Ping().Result()
+	if err != nil {
+		log.Fatalf("Redis连接失败: %v", err)
+	}
+
+	return client
+}
+
+
+
+# ====== FILE: ./comm/initialize/rpc.go ======
+
+package initialize
+
+import (
+	"astro-orderx/pkg/dogechain"
+	"fmt"
+
+	"go.uber.org/zap"
+)
+
+func InitDogecoinRPC(ip string, port int, user, password string) *dogechain.RPCClient {
+	// 构造完整的RPC端点URL
+	endpoint := fmt.Sprintf("http://%s:%d", ip, port)
+
+	// 创建RPC客户端
+	client := dogechain.NewRPCClient(endpoint, user, password)
+
+	// 测试连接 (由于原始dogechain.RPCClient没有GetBlockCount方法，暂时跳过连接测试)
+	// 在实际项目中，应该实现适当的连接测试方法
+	zap.L().Info("初始化Dogecoin RPC客户端",
+		zap.String("endpoint", endpoint))
+
+	return client
+}
+
+
+
+# ====== FILE: ./comm/initialize/mysql.go ======
+
+package initialize
+
+import (
+	"fmt"
+	"log"
+	"os"
+	"time"
+
+	"github.com/spf13/viper"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
+)
+
+// Database parameter settings
+const (
+	dbTablePrefix = "orderx_"
+
+	sqlBatchSize    = 1000
+	maxIdleConns    = 10
+	maxOpenConns    = 100
+	connMaxLifetime = time.Hour
+)
+
+// Mysql mysql struct
+type Mysql struct {
+	DB       *gorm.DB
+	host     string
+	port     int
+	user     string
+	passwd   string
+	database string
+}
+
+// NewMysql 初始化MySQL连接
+func NewMysql() *gorm.DB {
+	mysql := &Mysql{
+		host:     viper.GetString("mysql.host"),
+		port:     viper.GetInt("mysql.port"),
+		user:     viper.GetString("mysql.user"),
+		passwd:   viper.GetString("mysql.password"),
+		database: viper.GetString("mysql.database"),
+	}
+	return mysql.connect().pool().DB
+}
+
+func (m *Mysql) connect() *Mysql {
+	mysqlConfig := mysql.Config{
+		DSN:                       m.dsn(), // DSN data source name
+		DefaultStringSize:         256,     // string 类型字段的默认长度
+		DisableDatetimePrecision:  true,    // 禁用 datetime 精度
+		DontSupportRenameIndex:    true,    // 重命名索引时采用删除并新建的方式
+		DontSupportRenameColumn:   true,    // 用 `change` 重命名列
+		SkipInitializeWithVersion: false,   // 根据版本自动配置
+	}
+
+	// 设置日志级别
+	logLevel := logger.Warn
+	if viper.GetString("system.env") != "production" {
+		logLevel = logger.Info // 非正式环境显示sql
+	}
+
+	// 创建自定义logger
+	gormLogger := logger.New(
+		log.New(os.Stdout, "\r\n", log.LstdFlags), // io writer
+		logger.Config{
+			SlowThreshold:             200 * time.Millisecond,
+			LogLevel:                  logLevel,
+			IgnoreRecordNotFoundError: false,
+			Colorful:                  true,
+		},
+	)
+
+	db, err := gorm.Open(mysql.New(mysqlConfig), &gorm.Config{
+		Logger: gormLogger,
+	})
+	if err != nil {
+		log.Fatalf("Init mysql failed, err: %v", err)
+	}
+	log.Println("Connected to MySQL!")
+
+	m.DB = db
+	return m
+}
+
+func (m *Mysql) dsn() string {
+	return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		m.user, m.passwd, m.host, m.port, m.database)
+}
+
+func (m *Mysql) pool() *Mysql {
+	sqlDB, err := m.DB.DB()
+	if err != nil {
+		log.Fatalf("get sql.DB failed: %v", err)
+	}
+
+	sqlDB.SetMaxIdleConns(maxIdleConns)
+	sqlDB.SetMaxOpenConns(maxOpenConns)
+	sqlDB.SetConnMaxLifetime(connMaxLifetime)
+
+	return m
+}
+
+
+
+# ====== FILE: ./comm/initialize/init.go ======
+
+package initialize
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"log"
+	"net/http"
+	"reflect"
+	"runtime"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
+	"gorm.io/gorm"
+)
+
+// Server server
+type Server struct {
+	httpServer *http.Server
+	Engine     *gin.Engine
+
+	mysqlDB *gorm.DB
+}
+
+var server *Server
+
+// NewServer 创建服务器
+func NewServer(configPath string) *Server {
+	// 加载配置文件
+	viper.SetConfigFile(configPath)
+	if err := viper.ReadInConfig(); err != nil {
+		log.Fatalf("读取配置文件失败: %v", err)
+	}
+
+	e := gin.Default()
+	server = &Server{
+		httpServer: &http.Server{
+			Addr:    fmt.Sprintf(":%s", viper.GetString("server.port")),
+			Handler: e,
+		},
+		Engine:  e,
+		mysqlDB: NewMysql(),
+	}
+
+	return server
+}
+
+// AddServer add server
+func (s *Server) AddServer(serverFunc func(e *gin.Engine)) *Server {
+	funcName := runtime.FuncForPC(reflect.ValueOf(serverFunc).Pointer()).Name()
+	log.Printf("[服务注册] 服务名称: %s\n", funcName)
+	serverFunc(s.Engine)
+	return s
+}
+
+// AsyncStart async start
+func (s *Server) AsyncStart() {
+	log.Printf("[服务启动] 服务地址: %s\n", s.httpServer.Addr)
+	go func() {
+		if err := s.httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Printf("[服务启动] 服务异常: %v\n", err)
+		}
+	}()
+}
+
+// Stop stop
+func (s *Server) Stop() {
+	c, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	log.Println("[服务关闭] 关闭服务")
+	if err := s.httpServer.Shutdown(c); err != nil {
+		log.Fatalf("[服务关闭] 关闭服务异常: %v\n", err)
+	}
+}
+
+// GetMysqlInstance get mysql instance
+func GetMysqlInstance() *gorm.DB {
+	return server.mysqlDB
+}
+
+
+
+# ====== FILE: ./comm/utils/nft_decoder.go ======
+
+package utils
+
+import (
+	"astro-orderx/comm/constant"
+	"bytes"
+	"encoding/hex"
+	"errors"
+
+	"github.com/btcsuite/btcd/txscript"
+)
+
+// 参考原decodeElon.js实现
+func DecodeElonScript(scriptHex string) (string, []byte, error) {
+	scriptBytes, err := hex.DecodeString(scriptHex)
+	if err != nil {
+		return "", nil, err
+	}
+
+	// 解析操作码
+	tokenizer := txscript.MakeScriptTokenizer(0, scriptBytes)
+
+	// 验证NFT前缀
+	if !tokenizer.Next() || tokenizer.Opcode() != txscript.OP_RETURN {
+		return "", nil, errors.New("invalid NFT script: missing OP_RETURN")
+	}
+
+	// 检查第二个操作码是否是数据推送
+	if !tokenizer.Next() || !tokenizer.Done() {
+		// 获取前缀数据
+		prefixBytes := tokenizer.Data()
+		prefix := string(prefixBytes)
+		if prefix != constant.NFT_PREFIX {
+			return "", nil, errors.New("not a doginal")
+		}
+	} else {
+		return "", nil, errors.New("invalid NFT script: missing prefix")
+	}
+
+	// 收集后续数据块
+	var buffer bytes.Buffer
+	for tokenizer.Next() && !tokenizer.Done() {
+		// 检查是否为数据推送操作码
+		if txscript.IsSmallInt(tokenizer.Opcode()) {
+			continue
+		}
+
+		// 获取数据并添加到缓冲区
+		data := tokenizer.Data()
+		if len(data) > 0 {
+			buffer.Write(data)
+		}
+	}
+
+	return constant.NFT_CONTENT_TYPE, buffer.Bytes(), nil
+}
+
+
+
+# ====== FILE: ./comm/utils/convert.go ======
+
+package utils
+
+import "astro-orderx/comm/constant"
+
+func DogeToElon(amount float64) int64 {
+	return int64(amount * constant.DOGE_TO_ELON)
+}
+
+func ElonToDoge(value int64) float64 {
+	return float64(value) * constant.ELON_TO_DOGE
+}
+
+
+
+# ====== FILE: ./comm/constant/blockchain.go ======
+
+package constant
+
+const (
+	// 单位转换系数（1 DOGE = 100,000,000 ELON）
+	DOGE_TO_ELON = 100000000
+	ELON_TO_DOGE = 1.0 / DOGE_TO_ELON
+
+	// NFT标识符
+	NFT_PREFIX       = "ord"
+	NFT_CONTENT_TYPE = "text/plain;charset=utf-8"
+
+	// 交易参数
+	DEFAULT_FEE_RATE   = 50000  // 默认费率（ELON/byte）
+	MINIMUM_UTXO_VALUE = 100000 // 最小UTXO值（ELON）
+)
+
+
+
+# ====== FILE: ./comm/constant/constant.go ======
+
+package constant
+
+// Placeholder file for constant package.
+
+// MMM_SYSTEM_ENV_PROD 生产环境常量
+const (
+	MMM_SYSTEM_ENV_PROD = "production"
+	ERROR_CODE          = "ERROR_CODE"
+	BASE_URL            = "jiaru"
+	TRACKING_ID         = "TRACKING_ID"
+)
+
+
+
+# ====== FILE: ./scripts/dev.sh ======
+
+#!/bin/bash
+# 部署脚本占位文件
+
+
+# ====== FILE: ./conf/config.go ======
+
+package conf
+
+import (
+	"github.com/spf13/viper"
+	"go.uber.org/zap"
+)
+
+type RPCConfig struct {
+	IP       string
+	Port     int
+	User     string
+	Password string
+}
+
+type RedisConfig struct {
+	Addr     string
+	Password string
+	DB       int
+}
+
+type ServerConfig struct {
+	Port string
+}
+
+type WalletGroup struct {
+	Group          int
+	Receive        string
+	ReceivePrivate string
+}
+
+func LoadConfig() {
+	viper.SetConfigName("config")
+	viper.AddConfigPath("./conf")
+	viper.AutomaticEnv()
+
+	if err := viper.ReadInConfig(); err != nil {
+		zap.L().Fatal("Failed to read config file", zap.Error(err))
+	}
+}
+
+
+
+# ====== FILE: ./conf/config.yaml ======
+
+rpc:
+  ip: "127.0.0.1"
+  port: 22555
+  user: "rpcuser"
+  password: "rpcpass"
+
+redis:
+  addr: "localhost:6379"
+  password: ""
+  db: 0
+
+server:
+  port: "8080"
+
+wallets:
+  - group: 1
+    receive: "DAddress1"
+    receivePrivate: "PrivKey1"
+  - group: 2
+    receive: "DAddress2"
+    receivePrivate: "PrivKey2"
+
+nft:
+  tax: 0.05
+  monitorUrl: "https://dogechain.info/api/v1/"
+
+
+# ====== FILE: ./pkg/dogechain/tx_builder.go ======
+
+package dogechain
+
+import (
+	"bytes"
+	"encoding/hex"
+	"fmt"
+
+	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/btcsuite/btcd/txscript"
+	"github.com/btcsuite/btcd/wire"
+)
+
+func TransferElonUseUtxo(sender, privKey, receiver string, utxos []UTXO) (string, error) {
+	tx := wire.NewMsgTx(wire.TxVersion)
+
+	// 添加UTXO输入
+	for _, utxo := range utxos {
+		hash, err := chainhash.NewHashFromStr(utxo.TxHash)
+		if err != nil {
+			return "", fmt.Errorf("invalid hash: %w", err)
+		}
+		outPoint := wire.NewOutPoint(hash, utxo.Index)
+		txIn := wire.NewTxIn(outPoint, nil, nil)
+		tx.AddTxIn(txIn)
+	}
+
+	// 构建输出
+	receiverAddr, err := btcutil.DecodeAddress(receiver, &chaincfg.MainNetParams)
+	if err != nil {
+		return "", fmt.Errorf("invalid receiver address: %w", err)
+	}
+	pkScript, err := txscript.PayToAddrScript(receiverAddr)
+	if err != nil {
+		return "", fmt.Errorf("failed to create pkScript: %w", err)
+	}
+	tx.AddTxOut(wire.NewTxOut(utxos[0].Value, pkScript))
+
+	// 签名
+	// 简化实现，仅仅返回序列化的交易
+	// 注意：实际项目中应该实现完整的签名逻辑
+
+	// 返回十六进制格式交易
+	buf := bytes.NewBuffer(make([]byte, 0, tx.SerializeSize()))
+	tx.Serialize(buf)
+	return hex.EncodeToString(buf.Bytes()), nil
+}
+
+type UTXO struct {
+	TxHash string
+	Index  uint32
+	Value  int64
+}
+
+
+
+# ====== FILE: ./pkg/dogechain/rpc_client.go ======
+
+// pkg/dogechain/rpc_client.go
+package dogechain
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"sort"
+	"time"
+)
+
+// RPCClient Dogecoin RPC客户端
+type RPCClient struct {
+	endpoint   string
+	httpClient *http.Client
+	user       string
+	password   string
+}
+
+// TxDetail 交易详情结构
+type TxDetail struct {
+	Txid          string     `json:"txid"`
+	Hash          string     `json:"hash"`
+	Version       int32      `json:"version"`
+	Size          int32      `json:"size"`
+	Vsize         int32      `json:"vsize"`
+	Weight        int32      `json:"weight"`
+	Vin           []TxInput  `json:"vin"`
+	Vout          []TxOutput `json:"vout"`
+	Hex           string     `json:"hex"`
+	BlockHash     string     `json:"blockhash,omitempty"`
+	Confirmations int64      `json:"confirmations,omitempty"`
+	Time          int64      `json:"time,omitempty"`
+	BlockTime     int64      `json:"blocktime,omitempty"`
+}
+
+// TxInput 交易输入
+type TxInput struct {
+	Txid      string     `json:"txid"`
+	Vout      uint32     `json:"vout"`
+	ScriptSig *ScriptSig `json:"scriptSig"`
+	Sequence  uint32     `json:"sequence"`
+	Addresses []string   `json:"addresses,omitempty"`
+	Value     float64    `json:"value,omitempty"`
+}
+
+// ScriptSig 签名脚本
+type ScriptSig struct {
+	Asm string `json:"asm"`
+	Hex string `json:"hex"`
+}
+
+// TxOutput 交易输出
+type TxOutput struct {
+	Value        float64      `json:"value"`
+	N            uint32       `json:"n"`
+	ScriptPubKey ScriptPubKey `json:"scriptPubKey"`
+}
+
+// ScriptPubKey 公钥脚本
+type ScriptPubKey struct {
+	Asm       string   `json:"asm"`
+	Hex       string   `json:"hex"`
+	ReqSigs   int32    `json:"reqSigs,omitempty"`
+	Type      string   `json:"type"`
+	Addresses []string `json:"addresses,omitempty"`
+}
+
+// NewRPCClient 创建RPC客户端
+func NewRPCClient(endpoint, user, password string) *RPCClient {
+	return &RPCClient{
+		endpoint: endpoint,
+		httpClient: &http.Client{
+			Timeout: 15 * time.Second,
+		},
+		user:     user,
+		password: password,
+	}
+}
+
+// GetAddressUTXOs 获取地址的UTXO列表
+func (c *RPCClient) GetAddressUTXOs(address string) ([]UTXO, error) {
+	req := map[string]interface{}{
+		"jsonrpc": "1.0",
+		"id":      "astro-orderx",
+		"method":  "listunspent",
+		"params":  []interface{}{0, 9999999, []string{address}},
+	}
+
+	var resp struct {
+		Result []struct {
+			TxID   string  `json:"txid"`
+			Vout   uint32  `json:"vout"`
+			Amount float64 `json:"amount"`
+		} `json:"result"`
+		Error interface{} `json:"error"`
+	}
+
+	if err := c.rpcCall(req, &resp); err != nil {
+		return nil, err
+	}
+
+	// 检查是否有错误
+	if resp.Error != nil {
+		return nil, fmt.Errorf("RPC error: %v", resp.Error)
+	}
+
+	utxos := make([]UTXO, len(resp.Result))
+	for i, u := range resp.Result {
+		utxos[i] = UTXO{
+			TxHash: u.TxID,
+			Index:  u.Vout,
+			Value:  int64(u.Amount * 100000000), // 转换为ELON单位
+		}
+	}
+
+	sort.Slice(utxos, func(i, j int) bool {
+		return utxos[i].Value > utxos[j].Value
+	})
+
+	return utxos, nil
+}
+
+// GetTransaction 获取交易详情
+func (c *RPCClient) GetTransaction(txid string) (*TxDetail, error) {
+	req := map[string]interface{}{
+		"jsonrpc": "1.0",
+		"id":      "astro-orderx",
+		"method":  "getrawtransaction",
+		"params":  []interface{}{txid, true},
+	}
+
+	var resp struct {
+		Result TxDetail    `json:"result"`
+		Error  interface{} `json:"error"`
+	}
+
+	if err := c.rpcCall(req, &resp); err != nil {
+		return nil, err
+	}
+
+	// 检查是否有错误
+	if resp.Error != nil {
+		return nil, fmt.Errorf("RPC error: %v", resp.Error)
+	}
+
+	return &resp.Result, nil
+}
+
+// rpcCall 执行RPC调用
+func (c *RPCClient) rpcCall(req interface{}, resp interface{}) error {
+	body, _ := json.Marshal(req)
+	httpReq, _ := http.NewRequest("POST", c.endpoint, bytes.NewReader(body))
+	httpReq.SetBasicAuth(c.user, c.password)
+	httpReq.Header.Set("Content-Type", "application/json")
+
+	httpResp, err := c.httpClient.Do(httpReq)
+	if err != nil {
+		return err
+	}
+	defer httpResp.Body.Close()
+
+	if httpResp.StatusCode != http.StatusOK {
+		return fmt.Errorf("HTTP error: %s", httpResp.Status)
+	}
+
+	return json.NewDecoder(httpResp.Body).Decode(resp)
+}
+
+
+
+# ====== FILE: ./pkg/queues/speed_controller.go ======
+
+package queues
+
+import (
+	"container/heap"
+	"context"
+	"sync"
+	"time"
+
+	"go.uber.org/zap"
+)
+
+// SpeedController 交易速率控制器
+type SpeedController struct {
+	mu          sync.Mutex
+	priorityQ   *PriorityQueue // 带优先级的交易队列（网页7/8/9）
+	workerSem   chan struct{}  // 并发控制信号量（令牌桶）
+	retryPolicy RetryPolicy
+	pending     map[string]*Item // 正在处理的任务
+}
+
+// RetryPolicy 重试策略配置
+type RetryPolicy struct {
+	MaxRetries int
+	BaseDelay  time.Duration
+	MaxDelay   time.Duration
+}
+
+// NewSpeedController 创建速率控制器
+func NewSpeedController(config Config) *SpeedController {
+	sc := &SpeedController{
+		priorityQ:   NewPriorityQueue(100), // 使用NewPriorityQueue函数初始化
+		workerSem:   make(chan struct{}, config.MaxConcurrent),
+		retryPolicy: config.RetryPolicy,
+		pending:     make(map[string]*Item),
+	}
+	return sc
+}
+
+// Enqueue 添加交易到队列（网页3动态优先级逻辑）
+func (sc *SpeedController) Enqueue(item *Item) {
+	sc.mu.Lock()
+	defer sc.mu.Unlock()
+
+	// 去重检查（网页8任务跟踪机制）
+	if _, exists := sc.pending[item.Key]; exists {
+		return
+	}
+
+	heap.Push(sc.priorityQ, item)
+	sc.pending[item.Key] = item
+	go sc.processTasks()
+}
+
+// processTasks 任务处理循环（网页5/6速率控制核心）
+func (sc *SpeedController) processTasks() {
+	for {
+		select {
+		case sc.workerSem <- struct{}{}: // 获取令牌（网页4令牌桶算法）
+			item := sc.dequeue()
+			if item == nil {
+				<-sc.workerSem
+				continue
+			}
+
+			go sc.executeWithRetry(item)
+		default:
+			return
+		}
+	}
+}
+
+// dequeue 优先级出队逻辑（网页7/9堆实现）
+func (sc *SpeedController) dequeue() *Item {
+	sc.mu.Lock()
+	defer sc.mu.Unlock()
+
+	if sc.priorityQ.Len() == 0 {
+		return nil
+	}
+
+	item := heap.Pop(sc.priorityQ).(*Item)
+	delete(sc.pending, item.Key)
+	return item
+}
+
+// executeWithRetry 带退避重试的执行逻辑（网页5重试策略）
+func (sc *SpeedController) executeWithRetry(item *Item) {
+	defer func() { <-sc.workerSem }()
+
+	for attempt := 0; attempt <= sc.retryPolicy.MaxRetries; attempt++ {
+		err := item.Handler(context.Background())
+		if err == nil {
+			return
+		}
+
+		delay := sc.calculateBackoff(attempt)
+		time.Sleep(delay)
+	}
+
+	// 失败处理（网页8任务状态跟踪）
+	sc.handleFailure(item)
+}
+
+// calculateBackoff 指数退避计算（网页5最佳实践）
+func (sc *SpeedController) calculateBackoff(attempt int) time.Duration {
+	delay := sc.retryPolicy.BaseDelay * time.Duration(1<<uint(attempt))
+	if delay > sc.retryPolicy.MaxDelay {
+		return sc.retryPolicy.MaxDelay
+	}
+	return delay
+}
+
+// handleFailure 失败任务处理（网页3容错机制）
+func (sc *SpeedController) handleFailure(item *Item) {
+	sc.mu.Lock()
+	defer sc.mu.Unlock()
+
+	if item.RetryCount < sc.retryPolicy.MaxRetries {
+		item.RetryCount++
+		item.Priority += 10 // 失败任务提升优先级（网页9动态调整）
+		heap.Push(sc.priorityQ, item)
+		sc.pending[item.Key] = item
+	} else {
+		// 持久化失败记录（网页2漏洞检测集成点）
+		logFailedTransaction(item)
+	}
+}
+
+// logFailedTransaction 记录失败的交易
+func logFailedTransaction(item *Item) {
+	zap.L().Error("交易处理失败，已达到最大重试次数",
+		zap.String("txKey", item.Key),
+		zap.Int("retryCount", item.RetryCount),
+		zap.Any("value", item.Value))
+}
+
+
+
+# ====== FILE: ./pkg/queues/slowSpeedQueue.go ======
+
+package queues
+
+import (
+	"errors"
+	"sync"
+	"time"
+)
+
+// 以下为 slowSpeedBox 实现
+
+type Message struct {
+	Address string
+	Value   int
+}
+
+type SlowSpeedBox struct {
+	addressQueue []Message
+	banAddress   []string
+	fun          func(address, privateKey string, messages []Message)
+	address      string
+	privateKey   string
+	senderTicker *time.Ticker
+	banderTicker *time.Ticker
+	mutex        sync.Mutex
+}
+
+func NewSlowSpeedBox(
+	fun func(address, privateKey string, messages []Message),
+	address, privateKey string,
+) *SlowSpeedBox {
+	s := &SlowSpeedBox{
+		fun:        fun,
+		address:    address,
+		privateKey: privateKey,
+	}
+
+	s.senderTicker = time.NewTicker(60 * time.Second)
+	s.banderTicker = time.NewTicker(24 * time.Hour)
+
+	go func() {
+		for {
+			select {
+			case <-s.senderTicker.C:
+				s.processBatch()
+			case <-s.banderTicker.C:
+				s.clearBanned()
+			}
+		}
+	}()
+
+	return s
+}
+
+func (s *SlowSpeedBox) processBatch() {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	if len(s.addressQueue) == 0 {
+		return
+	}
+
+	// 复制当前队列并清空
+	messages := make([]Message, len(s.addressQueue))
+	copy(messages, s.addressQueue)
+	s.addressQueue = s.addressQueue[:0]
+
+	// 异步处理
+	go func() {
+		s.fun(s.address, s.privateKey, messages)
+		// 这里可以添加日志记录逻辑
+	}()
+}
+
+func (s *SlowSpeedBox) clearBanned() {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+	s.banAddress = s.banAddress[:0]
+}
+
+func (s *SlowSpeedBox) Enqueue(message Message) error {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	if message.Value > 5000 {
+		return errors.New("single transaction exceeds 5000 limit")
+	}
+
+	for _, addr := range s.banAddress {
+		if addr == message.Address {
+			return errors.New("address banned within 24 hours")
+		}
+	}
+
+	for _, msg := range s.addressQueue {
+		if msg.Address == message.Address {
+			return errors.New("address already in processing queue")
+		}
+	}
+
+	s.banAddress = append(s.banAddress, message.Address)
+	s.addressQueue = append(s.addressQueue, message)
+	return nil
+}
+
+// 以下为 slowSpeedQueue 实现
+
+type TaskHandler func(address, privateKey string, data interface{}) error
+
+type SlowSpeedQueue struct {
+	queue      []interface{}
+	processing bool
+	fun        TaskHandler
+	address    string
+	privateKey string
+	mutex      sync.Mutex
+}
+
+func NewSlowSpeedQueue(fun TaskHandler, address, privateKey string) *SlowSpeedQueue {
+	return &SlowSpeedQueue{
+		fun:        fun,
+		address:    address,
+		privateKey: privateKey,
+	}
+}
+
+func (q *SlowSpeedQueue) Enqueue(data interface{}) {
+	q.mutex.Lock()
+	defer q.mutex.Unlock()
+
+	q.queue = append(q.queue, data)
+
+	if !q.processing {
+		q.processing = true
+		go q.processLoop()
+	}
+}
+
+func (q *SlowSpeedQueue) processLoop() {
+	defer func() {
+		q.mutex.Lock()
+		q.processing = false
+		q.mutex.Unlock()
+	}()
+
+	for {
+		q.mutex.Lock()
+		if len(q.queue) == 0 {
+			q.mutex.Unlock()
+			return
+		}
+
+		task := q.queue[0]
+		q.queue = q.queue[1:]
+		q.mutex.Unlock()
+
+		// 执行任务
+		if err := q.fun(q.address, q.privateKey, task); err != nil {
+			// 处理错误日志
+		}
+
+		// 固定间隔
+		time.Sleep(15 * time.Second)
+	}
+}
+
+
+
+# ====== FILE: ./pkg/queues/priority_queue.go ======
+
+package queues
+
+import (
+	"container/heap"
+	"context"
+	"sync"
+	"time"
+)
+
+// Item 添加Item结构体完整定义
+type Item struct {
+	Key         string
+	Value       interface{}
+	Priority    int64
+	Handler     TxHandler // 添加处理器字段
+	RetryCount  int
+	EnqueueTime time.Time // 添加入队时间字段
+	index       int
+}
+
+type TxHandler func(ctx context.Context) error // 添加函数类型定义
+
+// Config 补充Config结构体
+type Config struct {
+	MaxConcurrent int
+	RetryPolicy   RetryPolicy
+}
+
+// PriorityQueue 交易优先级队列（对应slowSpeedQueue.js重构）
+type PriorityQueue struct {
+	items []*Item
+	lock  sync.RWMutex
+}
+
+// NewPriorityQueue 创建队列（对应queue_mgr.go的初始化）
+func NewPriorityQueue(capacity int) *PriorityQueue {
+	pq := &PriorityQueue{
+		items: make([]*Item, 0, capacity),
+	}
+	heap.Init(pq)
+	return pq
+}
+
+// 实现heap.Interface接口
+func (pq *PriorityQueue) Len() int {
+	pq.lock.RLock()
+	defer pq.lock.RUnlock()
+	return len(pq.items)
+}
+
+// Less 优先级比较（网页7的动态优先级逻辑）
+func (pq *PriorityQueue) Less(i, j int) bool {
+	pq.lock.RLock()
+	defer pq.lock.RUnlock()
+
+	// 优先处理高Gas费交易
+	if pq.items[i].Priority != pq.items[j].Priority {
+		return pq.items[i].Priority > pq.items[j].Priority
+	}
+
+	// 相同优先级时，先入队的优先
+	return pq.items[i].EnqueueTime.Before(pq.items[j].EnqueueTime)
+}
+
+func (pq *PriorityQueue) Swap(i, j int) {
+	pq.lock.Lock()
+	defer pq.lock.Unlock()
+	pq.items[i], pq.items[j] = pq.items[j], pq.items[i]
+	pq.items[i].index = i
+	pq.items[j].index = j
+}
+
+// Push 入队操作（对应queue_mgr.go的EnqueueTransfer）
+func (pq *PriorityQueue) Push(x interface{}) {
+	pq.lock.Lock()
+	defer pq.lock.Unlock()
+
+	item := x.(*Item)
+	item.index = len(pq.items)
+	item.EnqueueTime = time.Now()
+	pq.items = append(pq.items, item)
+}
+
+// Pop 出队操作（对应speed_controller.go的消费逻辑）
+func (pq *PriorityQueue) Pop() interface{} {
+	pq.lock.Lock()
+	defer pq.lock.Unlock()
+
+	old := pq.items
+	n := len(old)
+	item := old[n-1]
+	old[n-1] = nil  // 避免内存泄漏
+	item.index = -1 // 安全标记
+	pq.items = old[0 : n-1]
+	return item
+}
+
+// Peek 查看队首元素（非破坏性）
+func (pq *PriorityQueue) Peek() *Item {
+	pq.lock.RLock()
+	defer pq.lock.RUnlock()
+	if len(pq.items) == 0 {
+		return nil
+	}
+	return pq.items[0]
+}
+
+// UpdatePriority 动态调整优先级（网页9的速率控制）
+func (pq *PriorityQueue) UpdatePriority(item *Item, newPriority int64) {
+	pq.lock.Lock()
+	defer pq.lock.Unlock()
+
+	item.Priority = newPriority
+	heap.Fix(pq, item.index)
+}
+
+// CleanStaleItems 清理超时任务（对应网页6的老化处理）
+func (pq *PriorityQueue) CleanStaleItems(timeout time.Duration) []*Item {
+	pq.lock.Lock()
+	defer pq.lock.Unlock()
+
+	var staleItems []*Item
+	now := time.Now()
+
+	for i := 0; i < len(pq.items); {
+		if now.Sub(pq.items[i].EnqueueTime) > timeout {
+			staleItems = append(staleItems, pq.items[i])
+			heap.Remove(pq, i)
+		} else {
+			i++
+		}
+	}
+
+	return staleItems
+}
+
+
