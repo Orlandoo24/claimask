@@ -9,7 +9,6 @@
 后端技术栈
 
 - Golang
-- Hertz
 - Gin 
 - Redis
 - MySQL
