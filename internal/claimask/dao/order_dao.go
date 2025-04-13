@@ -1,7 +1,7 @@
 package dao
 
 import (
-	"astro-orderx/internal/claimask/model/po"
+	"claimask/internal/claimask/model/po"
 
 	"github.com/jinzhu/gorm"
 )

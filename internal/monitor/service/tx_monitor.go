@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"astro-orderx/pkg/dogechain"
+	"claimask/pkg/dogechain"
 
 	"go.uber.org/zap"
 )

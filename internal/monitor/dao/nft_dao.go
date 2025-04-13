@@ -1,7 +1,7 @@
 package dao
 
 import (
-	"astro-orderx/internal/monitor/model/po"
+	"claimask/internal/monitor/model/po"
 
 	"gorm.io/gorm"
 )

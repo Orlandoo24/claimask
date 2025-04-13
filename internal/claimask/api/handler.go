@@ -1,9 +1,9 @@
 package api
 
 import (
-	"astro-orderx/comm/response"
-	"astro-orderx/internal/claimask/model/dto"
-	"astro-orderx/internal/claimask/service"
+	"claimask/comm/response"
+	"claimask/internal/claimask/model/dto"
+	"claimask/internal/claimask/service"
 	"fmt"
 	"strconv"
 

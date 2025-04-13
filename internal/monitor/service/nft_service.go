@@ -2,9 +2,9 @@
 package service
 
 import (
-	"astro-orderx/internal/monitor/dao"
-	"astro-orderx/internal/monitor/model/po"
-	"astro-orderx/pkg/dogechain"
+	"claimask/internal/monitor/dao"
+	"claimask/internal/monitor/model/po"
+	"claimask/pkg/dogechain"
 	"errors"
 	"sync"
 )

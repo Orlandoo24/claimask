@@ -83,7 +83,7 @@ func NewRPCClient(endpoint, user, password string) *RPCClient {
 func (c *RPCClient) GetAddressUTXOs(address string) ([]UTXO, error) {
 	req := map[string]interface{}{
 		"jsonrpc": "1.0",
-		"id":      "astro-orderx",
+		"id":      "claimask",
 		"method":  "listunspent",
 		"params":  []interface{}{0, 9999999, []string{address}},
 	}
@@ -126,7 +126,7 @@ func (c *RPCClient) GetAddressUTXOs(address string) ([]UTXO, error) {
 func (c *RPCClient) GetTransaction(txid string) (*TxDetail, error) {
 	req := map[string]interface{}{
 		"jsonrpc": "1.0",
-		"id":      "astro-orderx",
+		"id":      "claimask",
 		"method":  "getrawtransaction",
 		"params":  []interface{}{txid, true},
 	}

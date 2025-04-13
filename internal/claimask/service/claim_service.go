@@ -1,8 +1,8 @@
 package service
 
 import (
-	"astro-orderx/internal/claimask/dao"
-	"astro-orderx/internal/claimask/model/po"
+	"claimask/internal/claimask/dao"
+	"claimask/internal/claimask/model/po"
 	"errors"
 	"fmt"
 	"log"

@@ -1,12 +1,12 @@
 package main
 
 import (
-	"astro-orderx/comm/initialize"
-	"astro-orderx/comm/utils"
-	claimaskAPI "astro-orderx/internal/claimask/api"
-	claimaskDao "astro-orderx/internal/claimask/dao"
-	claimaskService "astro-orderx/internal/claimask/service"
-	monitorAPI "astro-orderx/internal/monitor/api"
+	"claimask/comm/initialize"
+	"claimask/comm/utils"
+	claimaskAPI "claimask/internal/claimask/api"
+	claimaskDao "claimask/internal/claimask/dao"
+	claimaskService "claimask/internal/claimask/service"
+	monitorAPI "claimask/internal/monitor/api"
 	"fmt"
 
 	"github.com/gin-gonic/gin"

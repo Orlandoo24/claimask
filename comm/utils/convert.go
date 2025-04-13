@@ -1,6 +1,6 @@
 package utils
 
-import "astro-orderx/comm/constant"
+import "claimask/comm/constant"
 
 func DogeToElon(amount float64) int64 {
 	return int64(amount * constant.DOGE_TO_ELON)

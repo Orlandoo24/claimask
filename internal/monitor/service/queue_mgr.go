@@ -1,7 +1,7 @@
 package service
 
 import (
-	"astro-orderx/pkg/queues"
+	"claimask/pkg/queues"
 	"container/heap"
 	"context"
 	"time"

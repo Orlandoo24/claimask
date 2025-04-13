@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"astro-orderx/comm/initialize"
+	"claimask/comm/initialize"
 
 	"github.com/gin-gonic/gin"
 )

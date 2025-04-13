@@ -2,7 +2,7 @@
 package response
 
 import (
-	"astro-claimask/comm/constant"
+	"claimask/comm/constant"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

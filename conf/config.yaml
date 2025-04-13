@@ -9,6 +9,12 @@ redis:
   password:
   db: 0
 
+mysql:
+  host: "localhost"
+  port: 3306
+  user: "root"
+  password: "123@jiaru"
+
 server:
   port: "8888"
 

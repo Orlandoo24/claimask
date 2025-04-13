@@ -1,8 +1,8 @@
 package api
 
 import (
-	"astro-orderx/internal/monitor/service"
-	"astro-orderx/pkg/dogechain"
+	"claimask/internal/monitor/service"
+	"claimask/pkg/dogechain"
 
 	"time"
 

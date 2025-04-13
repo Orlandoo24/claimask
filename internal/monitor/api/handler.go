@@ -1,7 +1,7 @@
 package api
 
 import (
-	"astro-orderx/internal/monitor/service"
+	"claimask/internal/monitor/service"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"

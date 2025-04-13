@@ -1,7 +1,7 @@
 package initialize
 
 import (
-	"astro-orderx/pkg/dogechain"
+	"claimask/pkg/dogechain"
 	"fmt"
 
 	"go.uber.org/zap"
