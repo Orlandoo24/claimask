@@ -2,7 +2,7 @@
 /Users/123jiaru/Desktop/project/my/claimask
 ├── README.md
 ├── SECURITY.md
-├── claimask_project_code.txt
+├── claimask_app
 ├── comm
 │   ├── constant
 │   │   ├── blockchain.go
@@ -187,12 +187,12 @@
    1 | package main
    2 | 
    3 | import (
-   4 | 	"astro-orderx/comm/initialize"
-   5 | 	"astro-orderx/comm/utils"
-   6 | 	claimaskAPI "astro-orderx/internal/claimask/api"
-   7 | 	claimaskDao "astro-orderx/internal/claimask/dao"
-   8 | 	claimaskService "astro-orderx/internal/claimask/service"
-   9 | 	monitorAPI "astro-orderx/internal/monitor/api"
+   4 | 	"claimask/comm/initialize"
+   5 | 	"claimask/comm/utils"
+   6 | 	claimaskAPI "claimask/internal/claimask/api"
+   7 | 	claimaskDao "claimask/internal/claimask/dao"
+   8 | 	claimaskService "claimask/internal/claimask/service"
+   9 | 	monitorAPI "claimask/internal/monitor/api"
   10 | 	"fmt"
   11 | 
   12 | 	"github.com/gin-gonic/gin"
@@ -265,7 +265,7 @@
    1 | package dao
    2 | 
    3 | import (
-   4 | 	"astro-orderx/internal/monitor/model/po"
+   4 | 	"claimask/internal/monitor/model/po"
    5 | 
    6 | 	"gorm.io/gorm"
    7 | )
@@ -305,7 +305,7 @@
    1 | package dao
    2 | 
    3 | import (
-   4 | 	"astro-orderx/internal/monitor/model/po"
+   4 | 	"claimask/internal/monitor/model/po"
    5 | 
    6 | 	"gorm.io/gorm"
    7 | )
@@ -418,7 +418,7 @@
    1 | package api
    2 | 
    3 | import (
-   4 | 	"astro-orderx/internal/monitor/service"
+   4 | 	"claimask/internal/monitor/service"
    5 | 
    6 | 	"github.com/gin-gonic/gin"
    7 | 	"go.uber.org/zap"
@@ -482,8 +482,8 @@
    1 | package api
    2 | 
    3 | import (
-   4 | 	"astro-orderx/internal/monitor/service"
-   5 | 	"astro-orderx/pkg/dogechain"
+   4 | 	"claimask/internal/monitor/service"
+   5 | 	"claimask/pkg/dogechain"
    6 | 
    7 | 	"time"
    8 | 
@@ -522,7 +522,7 @@
    6 | 	"sync"
    7 | 	"time"
    8 | 
-   9 | 	"astro-orderx/pkg/dogechain"
+   9 | 	"claimask/pkg/dogechain"
   10 | 
   11 | 	"go.uber.org/zap"
   12 | )
@@ -700,9 +700,9 @@
    2 | package service
    3 | 
    4 | import (
-   5 | 	"astro-orderx/internal/monitor/dao"
-   6 | 	"astro-orderx/internal/monitor/model/po"
-   7 | 	"astro-orderx/pkg/dogechain"
+   5 | 	"claimask/internal/monitor/dao"
+   6 | 	"claimask/internal/monitor/model/po"
+   7 | 	"claimask/pkg/dogechain"
    8 | 	"errors"
    9 | 	"sync"
   10 | )
@@ -816,7 +816,7 @@
    1 | package service
    2 | 
    3 | import (
-   4 | 	"astro-orderx/pkg/queues"
+   4 | 	"claimask/pkg/queues"
    5 | 	"container/heap"
    6 | 	"context"
    7 | 	"time"
@@ -944,7 +944,7 @@
    1 | package dao
    2 | 
    3 | import (
-   4 | 	"astro-orderx/internal/claimask/model/po"
+   4 | 	"claimask/internal/claimask/model/po"
    5 | 
    6 | 	"github.com/jinzhu/gorm"
    7 | )
@@ -1007,9 +1007,9 @@
    1 | package api
    2 | 
    3 | import (
-   4 | 	"astro-orderx/comm/response"
-   5 | 	"astro-orderx/internal/claimask/model/dto"
-   6 | 	"astro-orderx/internal/claimask/service"
+   4 | 	"claimask/comm/response"
+   5 | 	"claimask/internal/claimask/model/dto"
+   6 | 	"claimask/internal/claimask/service"
    7 | 	"fmt"
    8 | 	"strconv"
    9 | 
@@ -1106,8 +1106,8 @@
    1 | package service
    2 | 
    3 | import (
-   4 | 	"astro-orderx/internal/claimask/dao"
-   5 | 	"astro-orderx/internal/claimask/model/po"
+   4 | 	"claimask/internal/claimask/dao"
+   5 | 	"claimask/internal/claimask/model/po"
    6 | 	"errors"
    7 | 	"fmt"
    8 | 	"log"
@@ -1311,7 +1311,7 @@
    1 | package middleware
    2 | 
    3 | import (
-   4 | 	"astro-orderx/comm/initialize"
+   4 | 	"claimask/comm/initialize"
    5 | 
    6 | 	"github.com/gin-gonic/gin"
    7 | )
@@ -1420,7 +1420,7 @@
    2 | package response
    3 | 
    4 | import (
-   5 | 	"astro-claimask/comm/constant"
+   5 | 	"claimask/comm/constant"
    6 | 	"net/http"
    7 | 
    8 | 	"github.com/gin-gonic/gin"
@@ -1518,7 +1518,7 @@
    1 | package initialize
    2 | 
    3 | import (
-   4 | 	"astro-orderx/pkg/dogechain"
+   4 | 	"claimask/pkg/dogechain"
    5 | 	"fmt"
    6 | 
    7 | 	"go.uber.org/zap"
@@ -1823,8 +1823,8 @@
    1 | package utils
    2 | 
    3 | import (
-   4 | 	"astro-orderx/comm/constant"
-   5 | 	"bytes"
+   4 | 	"bytes"
+   5 | 	"claimask/comm/constant"
    6 | 	"encoding/hex"
    7 | 	"errors"
    8 | 
@@ -1882,7 +1882,7 @@
 
    1 | package utils
    2 | 
-   3 | import "astro-orderx/comm/constant"
+   3 | import "claimask/comm/constant"
    4 | 
    5 | func DogeToElon(amount float64) int64 {
    6 | 	return int64(amount * constant.DOGE_TO_ELON)
@@ -1987,20 +1987,27 @@
    9 |   password:
   10 |   db: 0
   11 | 
-  12 | server:
-  13 |   port: "8888"
-  14 | 
-  15 | wallets:
-  16 |   - group: 1
-  17 |     receive: "DAddress1"
-  18 |     receivePrivate: "PrivKey1"
-  19 |   - group: 2
-  20 |     receive: "DAddress2"
-  21 |     receivePrivate: "PrivKey2"
-  22 | 
-  23 | nft:
-  24 |   tax: 0.05
-  25 |   monitorUrl: "https://dogechain.info/api/v1/"
+  12 | mysql:
+  13 |   host: "localhost"
+  14 |   port: 3306
+  15 |   user: "root"
+  16 |   password: "123@jiaru"
+  17 | 
+  18 | server:
+  19 |   port: "8888"
+  20 | 
+  21 | wallets:
+  22 |   - group: 1
+  23 |     receive: "DAddress1"
+  24 |     receivePrivate: "PrivKey1"
+  25 |   - group: 2
+  26 |     receive: "DAddress2"
+  27 |     receivePrivate: "PrivKey2"
+  28 | 
+  29 | nft:
+  30 |   tax: 0.05
+  31 |   monitorUrl: "https://dogechain.info/api/v1/"
+
 
 
 // ====== FILE: pkg/dogechain/tx_builder.go ======
@@ -2149,7 +2156,7 @@
   83 | func (c *RPCClient) GetAddressUTXOs(address string) ([]UTXO, error) {
   84 | 	req := map[string]interface{}{
   85 | 		"jsonrpc": "1.0",
-  86 | 		"id":      "astro-orderx",
+  86 | 		"id":      "claimask",
   87 | 		"method":  "listunspent",
   88 | 		"params":  []interface{}{0, 9999999, []string{address}},
   89 | 	}
@@ -2192,7 +2199,7 @@
  126 | func (c *RPCClient) GetTransaction(txid string) (*TxDetail, error) {
  127 | 	req := map[string]interface{}{
  128 | 		"jsonrpc": "1.0",
- 129 | 		"id":      "astro-orderx",
+ 129 | 		"id":      "claimask",
  130 | 		"method":  "getrawtransaction",
  131 | 		"params":  []interface{}{txid, true},
  132 | 	}
