@@ -26,6 +26,7 @@
 ├── conf
 │   ├── config.go
 │   └── config.yaml
+├── docker
 ├── go.mod
 ├── go.sum
 ├── go.work
@@ -116,6 +117,14 @@
 │   ├── go_project_code.txt
 │   ├── golangci-lint.sh
 │   ├── js_code.sh
+│   ├── kafka
+│   │   ├── docker-compose.yml
+│   │   ├── go.mod
+│   │   ├── go.sum
+│   │   ├── install.sh
+│   │   ├── kafka.yaml
+│   │   ├── kafka.zip
+│   │   └── 一分钟 docker 拉起 kafka.md
 │   ├── mint
 │   │   ├── img.png
 │   │   ├── main.go
@@ -124,9 +133,7 @@
 │   └── richx
 │       ├── go.mod
 │       ├── go.sum
-│       ├── main.go
-│       ├── richx.md
-│       └── richx_claim
+│       └── main.go
 ├── slowSpeed_js
 │   ├── slowSpeedBox.js
 │   ├── slowSpeedQueue.go
@@ -158,7 +165,7 @@
     │       └── site-packages
     └── pyvenv.cfg
 
-56 directories, 102 files
+58 directories, 107 files
 
 
 
@@ -2651,166 +2658,167 @@
 
    1 | package main
    2 | 
-   3 | import (
-   4 | 	"bufio"
-   5 | 	"fmt"
-   6 | 	"os"
-   7 | 	"path/filepath"
-   8 | 	"strings"
-   9 | 	"sync"
-  10 | 	"time"
-  11 | )
-  12 | 
-  13 | const (
-  14 | 	outputFile    = "project_code.txt"
-  15 | 	maxGoroutines = 16 // 最大并发goroutine数
-  16 | )
-  17 | 
-  18 | var (
-  19 | 	excludeDirs  = map[string]bool{".git": true, "__pycache__": true, "node_modules": true}
-  20 | 	excludeFiles = map[string]bool{".pyc": true, ".DS_Store": true}
-  21 | 	includeExt   = map[string]bool{".go": true, ".py": true, ".yaml": true, ".md": true}
-  22 | )
-  23 | 
-  24 | func main() {
-  25 | 	startTime := time.Now()
-  26 | 	defer func() {
-  27 | 		fmt.Printf("\n扫描完成，耗时: %.2fs\n", time.Since(startTime).Seconds())
-  28 | 	}()
-  29 | 
-  30 | 	// 获取项目根目录
-  31 | 	projectRoot, _ := os.Getwd()
-  32 | 	if len(os.Args) > 1 {
-  33 | 		projectRoot = os.Args[1]
-  34 | 	}
-  35 | 
-  36 | 	// 阶段1：预扫描获取文件列表
-  37 | 	filePaths := make(chan string, 1000)
-  38 | 	go scanFiles(projectRoot, filePaths)
-  39 | 
-  40 | 	// 初始化进度条
-  41 | 	total := countFiles(projectRoot)
-  42 | 	bar := pb.StartNew(total)
-  43 | 	defer bar.Finish()
-  44 | 
-  45 | 	// 阶段2：并发处理
-  46 | 	var wg sync.WaitGroup
-  47 | 	outputMutex := &sync.Mutex{}
-  48 | 	sem := make(chan struct{}, maxGoroutines) // 并发控制
-  49 | 
-  50 | 	for path := range filePaths {
-  51 | 		wg.Add(1)
-  52 | 		sem <- struct{}{}
-  53 | 		go func(p string) {
-  54 | 			defer func() {
-  55 | 				<-sem
-  56 | 				wg.Done()
-  57 | 				bar.Increment()
-  58 | 			}()
-  59 | 			processFile(p, projectRoot, outputMutex)
-  60 | 		}(path)
-  61 | 	}
-  62 | 
-  63 | 	wg.Wait()
-  64 | }
-  65 | 
-  66 | // 递归扫描文件并发送到channel
-  67 | func scanFiles(root string, paths chan<- string) {
-  68 | 	defer close(paths)
-  69 | 
-  70 | 	filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-  71 | 		if err != nil {
-  72 | 			return nil
-  73 | 		}
-  74 | 
-  75 | 		// 过滤目录
-  76 | 		if info.IsDir() {
-  77 | 			if excludeDirs[filepath.Base(path)] {
-  78 | 				return filepath.SkipDir
-  79 | 			}
-  80 | 			return nil
-  81 | 		}
-  82 | 
-  83 | 		// 过滤文件
-  84 | 		ext := filepath.Ext(path)
-  85 | 		if excludeFiles[ext] {
-  86 | 			return nil
-  87 | 		}
-  88 | 		if !includeExt[ext] && filepath.Base(path) != "requirements.txt" {
-  89 | 			return nil
-  90 | 		}
-  91 | 
-  92 | 		paths <- path
-  93 | 		return nil
-  94 | 	})
-  95 | }
-  96 | 
-  97 | // 处理单个文件
-  98 | func processFile(path, root string, mutex *sync.Mutex) {
-  99 | 	relativePath, _ := filepath.Rel(root, path)
- 100 | 	header := fmt.Sprintf("\n// ====== FILE: %s ======\n\n", relativePath)
- 101 | 
- 102 | 	content, err := readFileWithLineNumbers(path)
- 103 | 	if err != nil {
- 104 | 		content = fmt.Sprintf("// Error reading file: %v\n", err)
- 105 | 	}
- 106 | 
- 107 | 	// 加锁写入
- 108 | 	mutex.Lock()
- 109 | 	defer mutex.Unlock()
- 110 | 
- 111 | 	if err := appendToFile(outputFile, header+content+"\n\n"); err != nil {
- 112 | 		fmt.Printf("写入失败: %v\n", err)
- 113 | 	}
- 114 | }
- 115 | 
- 116 | // 带行号读取文件
- 117 | func readFileWithLineNumbers(path string) (string, error) {
- 118 | 	file, err := os.Open(path)
- 119 | 	if err != nil {
- 120 | 		return "", err
- 121 | 	}
- 122 | 	defer file.Close()
- 123 | 
- 124 | 	var sb strings.Builder
- 125 | 	scanner := bufio.NewScanner(file)
- 126 | 	lineNum := 1
- 127 | 
- 128 | 	for scanner.Scan() {
- 129 | 		sb.WriteString(fmt.Sprintf("%4d | %s\n", lineNum, scanner.Text()))
- 130 | 		lineNum++
- 131 | 	}
- 132 | 
- 133 | 	if err := scanner.Err(); err != nil {
- 134 | 		return "", err
- 135 | 	}
- 136 | 	return sb.String(), nil
- 137 | }
- 138 | 
- 139 | // 原子化追加写入
- 140 | func appendToFile(filename, content string) error {
- 141 | 	f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
- 142 | 	if err != nil {
- 143 | 		return err
- 144 | 	}
- 145 | 	defer f.Close()
- 146 | 
- 147 | 	_, err = f.WriteString(content)
- 148 | 	return err
- 149 | }
- 150 | 
- 151 | // 预扫描统计文件总数
- 152 | func countFiles(root string) int {
- 153 | 	count := 0
- 154 | 	filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
- 155 | 		if err != nil || info.IsDir() {
- 156 | 			return nil
- 157 | 		}
- 158 | 		count++
- 159 | 		return nil
- 160 | 	})
- 161 | 	return count
- 162 | }
+   3 | //
+   4 | //import (
+   5 | //	"bufio"
+   6 | //	"fmt"
+   7 | //	"os"
+   8 | //	"path/filepath"
+   9 | //	"strings"
+  10 | //	"sync"
+  11 | //	"time"
+  12 | //)
+  13 | //
+  14 | //const (
+  15 | //	outputFile    = "project_code.txt"
+  16 | //	maxGoroutines = 16 // 最大并发goroutine数
+  17 | //)
+  18 | //
+  19 | //var (
+  20 | //	excludeDirs  = map[string]bool{".git": true, "__pycache__": true, "node_modules": true}
+  21 | //	excludeFiles = map[string]bool{".pyc": true, ".DS_Store": true}
+  22 | //	includeExt   = map[string]bool{".go": true, ".py": true, ".yaml": true, ".md": true}
+  23 | //)
+  24 | //
+  25 | //func main() {
+  26 | //	startTime := time.Now()
+  27 | //	defer func() {
+  28 | //		fmt.Printf("\n扫描完成，耗时: %.2fs\n", time.Since(startTime).Seconds())
+  29 | //	}()
+  30 | //
+  31 | //	// 获取项目根目录
+  32 | //	projectRoot, _ := os.Getwd()
+  33 | //	if len(os.Args) > 1 {
+  34 | //		projectRoot = os.Args[1]
+  35 | //	}
+  36 | //
+  37 | //	// 阶段1：预扫描获取文件列表
+  38 | //	filePaths := make(chan string, 1000)
+  39 | //	go scanFiles(projectRoot, filePaths)
+  40 | //
+  41 | //	// 初始化进度条
+  42 | //	total := countFiles(projectRoot)
+  43 | //	bar := pb.StartNew(total)
+  44 | //	defer bar.Finish()
+  45 | //
+  46 | //	// 阶段2：并发处理
+  47 | //	var wg sync.WaitGroup
+  48 | //	outputMutex := &sync.Mutex{}
+  49 | //	sem := make(chan struct{}, maxGoroutines) // 并发控制
+  50 | //
+  51 | //	for path := range filePaths {
+  52 | //		wg.Add(1)
+  53 | //		sem <- struct{}{}
+  54 | //		go func(p string) {
+  55 | //			defer func() {
+  56 | //				<-sem
+  57 | //				wg.Done()
+  58 | //				bar.Increment()
+  59 | //			}()
+  60 | //			processFile(p, projectRoot, outputMutex)
+  61 | //		}(path)
+  62 | //	}
+  63 | //
+  64 | //	wg.Wait()
+  65 | //}
+  66 | //
+  67 | //// 递归扫描文件并发送到channel
+  68 | //func scanFiles(root string, paths chan<- string) {
+  69 | //	defer close(paths)
+  70 | //
+  71 | //	filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+  72 | //		if err != nil {
+  73 | //			return nil
+  74 | //		}
+  75 | //
+  76 | //		// 过滤目录
+  77 | //		if info.IsDir() {
+  78 | //			if excludeDirs[filepath.Base(path)] {
+  79 | //				return filepath.SkipDir
+  80 | //			}
+  81 | //			return nil
+  82 | //		}
+  83 | //
+  84 | //		// 过滤文件
+  85 | //		ext := filepath.Ext(path)
+  86 | //		if excludeFiles[ext] {
+  87 | //			return nil
+  88 | //		}
+  89 | //		if !includeExt[ext] && filepath.Base(path) != "requirements.txt" {
+  90 | //			return nil
+  91 | //		}
+  92 | //
+  93 | //		paths <- path
+  94 | //		return nil
+  95 | //	})
+  96 | //}
+  97 | //
+  98 | //// 处理单个文件
+  99 | //func processFile(path, root string, mutex *sync.Mutex) {
+ 100 | //	relativePath, _ := filepath.Rel(root, path)
+ 101 | //	header := fmt.Sprintf("\n// ====== FILE: %s ======\n\n", relativePath)
+ 102 | //
+ 103 | //	content, err := readFileWithLineNumbers(path)
+ 104 | //	if err != nil {
+ 105 | //		content = fmt.Sprintf("// Error reading file: %v\n", err)
+ 106 | //	}
+ 107 | //
+ 108 | //	// 加锁写入
+ 109 | //	mutex.Lock()
+ 110 | //	defer mutex.Unlock()
+ 111 | //
+ 112 | //	if err := appendToFile(outputFile, header+content+"\n\n"); err != nil {
+ 113 | //		fmt.Printf("写入失败: %v\n", err)
+ 114 | //	}
+ 115 | //}
+ 116 | //
+ 117 | //// 带行号读取文件
+ 118 | //func readFileWithLineNumbers(path string) (string, error) {
+ 119 | //	file, err := os.Open(path)
+ 120 | //	if err != nil {
+ 121 | //		return "", err
+ 122 | //	}
+ 123 | //	defer file.Close()
+ 124 | //
+ 125 | //	var sb strings.Builder
+ 126 | //	scanner := bufio.NewScanner(file)
+ 127 | //	lineNum := 1
+ 128 | //
+ 129 | //	for scanner.Scan() {
+ 130 | //		sb.WriteString(fmt.Sprintf("%4d | %s\n", lineNum, scanner.Text()))
+ 131 | //		lineNum++
+ 132 | //	}
+ 133 | //
+ 134 | //	if err := scanner.Err(); err != nil {
+ 135 | //		return "", err
+ 136 | //	}
+ 137 | //	return sb.String(), nil
+ 138 | //}
+ 139 | //
+ 140 | //// 原子化追加写入
+ 141 | //func appendToFile(filename, content string) error {
+ 142 | //	f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+ 143 | //	if err != nil {
+ 144 | //		return err
+ 145 | //	}
+ 146 | //	defer f.Close()
+ 147 | //
+ 148 | //	_, err = f.WriteString(content)
+ 149 | //	return err
+ 150 | //}
+ 151 | //
+ 152 | //// 预扫描统计文件总数
+ 153 | //func countFiles(root string) int {
+ 154 | //	count := 0
+ 155 | //	filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+ 156 | //		if err != nil || info.IsDir() {
+ 157 | //			return nil
+ 158 | //		}
+ 159 | //		count++
+ 160 | //		return nil
+ 161 | //	})
+ 162 | //	return count
+ 163 | //}
 
 
 
@@ -3363,6 +3371,153 @@
  469 | 		logger.Fatalf("启动服务失败: %v", err)
  470 | 	}
  471 | }
+
+
+
+// ====== FILE: scripts/kafka/go.mod ======
+
+   1 | module test_kafka
+   2 | 
+   3 | go 1.21.0
+   4 | 
+   5 | toolchain go1.23.4
+   6 | 
+   7 | require github.com/spf13/viper v1.20.1
+   8 | 
+   9 | require (
+  10 | 	github.com/fsnotify/fsnotify v1.8.0 // indirect
+  11 | 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
+  12 | 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
+  13 | 	github.com/sagikazarmark/locafero v0.7.0 // indirect
+  14 | 	github.com/sourcegraph/conc v0.3.0 // indirect
+  15 | 	github.com/spf13/afero v1.12.0 // indirect
+  16 | 	github.com/spf13/cast v1.7.1 // indirect
+  17 | 	github.com/spf13/pflag v1.0.6 // indirect
+  18 | 	github.com/subosito/gotenv v1.6.0 // indirect
+  19 | 	go.uber.org/atomic v1.9.0 // indirect
+  20 | 	go.uber.org/multierr v1.9.0 // indirect
+  21 | 	golang.org/x/sys v0.29.0 // indirect
+  22 | 	golang.org/x/text v0.21.0 // indirect
+  23 | 	gopkg.in/yaml.v3 v3.0.1 // indirect
+  24 | )
+  25 | 
+  26 | replace github.com/confluentinc/confluent-kafka-go => github.com/confluentinc/confluent-kafka-go v1.9.2
+
+
+
+// ====== FILE: scripts/kafka/kafka.yaml ======
+
+   1 | kafka:
+   2 |   brokers: "9.134.132.205:19092" # 若远程连接替换为服务器IP
+   3 |   topic: "test-topic" # 默认Topic名称
+   4 | 
+   5 |   # SASL认证（与docker-compose.yml中的配置完全一致）
+   6 |   sasl:
+   7 |     username: "admin"
+   8 |     password: "123456"
+   9 |     mechanism: "SCRAM-SHA-256"
+
+
+
+// ====== FILE: scripts/kafka/docker-compose.yml ======
+
+   1 | version: "2"
+   2 | 
+   3 | services:
+   4 |   kafka-0:
+   5 |     image: docker.io/bitnami/kafka:3.5
+   6 |     container_name: kafka-0
+   7 |     ports:
+   8 |       - 19092:9092
+   9 |       - 19093:9093      
+  10 |     environment:
+  11 |       # KRaft settings
+  12 |       - KAFKA_ENABLE_KRAFT=yes
+  13 |       - KAFKA_CFG_NODE_ID=0
+  14 |       - KAFKA_CFG_PROCESS_ROLES=controller,broker
+  15 |       - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka-0:9093,1@kafka-1:9093,2@kafka-2:9093
+  16 |       - KAFKA_KRAFT_CLUSTER_ID=abcdefghijklmnopqrstuv
+  17 |       # Listeners
+  18 |       - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+  19 |       - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://${HOST_CONFIG}:19092
+  20 |       - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+  21 |       - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+  22 |       - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+  23 |       - KAFKA_CFG_MESSAGE_MAX_BYTES=33554432
+  24 |     volumes:
+  25 |       - ./data/kafka0:/root/bitnami/kafka
+  26 |     networks:
+  27 |       - mx-wk
+  28 | 
+  29 |   kafka-1:
+  30 |     image: docker.io/bitnami/kafka:3.5
+  31 |     container_name: kafka-1
+  32 |     ports:
+  33 |       - 29092:9092
+  34 |       - 29093:9093 
+  35 |     environment:
+  36 |       # KRaft settings
+  37 |       - KAFKA_ENABLE_KRAFT=yes
+  38 |       - KAFKA_CFG_NODE_ID=1
+  39 |       - KAFKA_CFG_PROCESS_ROLES=controller,broker
+  40 |       - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka-0:9093,1@kafka-1:9093,2@kafka-2:9093
+  41 |       - KAFKA_KRAFT_CLUSTER_ID=abcdefghijklmnopqrstuv
+  42 |       # Listeners
+  43 |       - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+  44 |       - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://${HOST_CONFIG}:29092
+  45 |       - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+  46 |       - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+  47 |       - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+  48 |       - KAFKA_CFG_MESSAGE_MAX_BYTES=33554432
+  49 |     volumes:
+  50 |       - ./data/kafka1:/root/bitnami/kafka
+  51 |     networks:
+  52 |       - mx-wk
+  53 | 
+  54 |   kafka-2:
+  55 |     image: docker.io/bitnami/kafka:3.5
+  56 |     container_name: kafka-2
+  57 |     ports:
+  58 |       - 39092:9092
+  59 |       - 39093:9093 
+  60 |     environment:
+  61 |       # KRaft settings
+  62 |       - KAFKA_ENABLE_KRAFT=yes
+  63 |       - KAFKA_CFG_NODE_ID=2
+  64 |       - KAFKA_CFG_PROCESS_ROLES=controller,broker
+  65 |       - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka-0:9093,1@kafka-1:9093,2@kafka-2:9093
+  66 |       - KAFKA_KRAFT_CLUSTER_ID=abcdefghijklmnopqrstuv
+  67 |       # Listeners
+  68 |       - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+  69 |       - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://${HOST_CONFIG}:39092
+  70 |       - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+  71 |       - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+  72 |       - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+  73 |       - KAFKA_CFG_MESSAGE_MAX_BYTES=33554432
+  74 |     volumes:
+  75 |       - ./data/kafka2:/root/bitnami/kafka
+  76 |     networks:
+  77 |       - mx-wk      
+  78 | 
+  79 |   kafkaui:
+  80 |     image: provectuslabs/kafka-ui:latest   
+  81 |     container_name: kafkaui
+  82 |     ports:
+  83 |      - 7080:8080
+  84 |     depends_on:
+  85 |       - kafka-0
+  86 |       - kafka-1
+  87 |       - kafka-2
+  88 |     environment:
+  89 |      - KAFKA_CLUSTERS_0_NAME=mx
+  90 |      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=${HOST_CONFIG}:19092,${HOST_CONFIG}:29092,${HOST_CONFIG}:39092
+  91 |     networks:
+  92 |       - mx-wk
+  93 |       
+  94 | networks:
+  95 |   mx-wk:
+  96 |     external: true
+  97 |     name: mx-wk
 
 
 
