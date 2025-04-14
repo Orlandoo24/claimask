@@ -18,6 +18,9 @@ mysql:
 server:
   port: "8888"
 
+richx:
+  port: "8882"
+
 wallets:
   - group: 1
     receive: "DAddress1"
