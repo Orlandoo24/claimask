@@ -1,0 +1,514 @@
+=== GO PROJECT STRUCTURE ===
+/Users/123jiaru/Desktop/project/my/claimask/scripts/kafka_go
+├── consumer
+│   ├── go.mod
+│   ├── go.sum
+│   └── main.go
+├── docker-compose.yml
+├── go.mod
+├── go.sum
+├── go_collect.py
+├── go_project_code.txt
+├── install.sh
+├── kafka.yaml
+├── kafka.zip
+├── main.go
+├── producer
+│   ├── go.mod
+│   ├── go.sum
+│   └── main.go
+├── scripts
+│   └── kafka_go
+│       └── consumer
+└── 一分钟 docker 拉起 kafka.md
+
+6 directories, 16 files
+
+
+
+// ====== FILE: go.mod ======
+
+   1 | module kafka_go
+   2 | 
+   3 | go 1.23.0
+   4 | 
+   5 | toolchain go1.23.4
+   6 | 
+   7 | require (
+   8 | 	github.com/confluentinc/confluent-kafka-go v1.9.2
+   9 | 	github.com/spf13/viper v1.20.1
+  10 | )
+  11 | 
+  12 | require (
+  13 | 	github.com/fsnotify/fsnotify v1.8.0 // indirect
+  14 | 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
+  15 | 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
+  16 | 	github.com/sagikazarmark/locafero v0.7.0 // indirect
+  17 | 	github.com/sourcegraph/conc v0.3.0 // indirect
+  18 | 	github.com/spf13/afero v1.12.0 // indirect
+  19 | 	github.com/spf13/cast v1.7.1 // indirect
+  20 | 	github.com/spf13/pflag v1.0.6 // indirect
+  21 | 	github.com/subosito/gotenv v1.6.0 // indirect
+  22 | 	go.uber.org/atomic v1.9.0 // indirect
+  23 | 	go.uber.org/multierr v1.9.0 // indirect
+  24 | 	golang.org/x/sys v0.29.0 // indirect
+  25 | 	golang.org/x/text v0.21.0 // indirect
+  26 | 	gopkg.in/yaml.v3 v3.0.1 // indirect
+  27 | )
+  28 | 
+  29 | replace github.com/confluentinc/confluent-kafka-go => github.com/confluentinc/confluent-kafka-go v1.9.2
+
+
+
+// ====== FILE: kafka.yaml ======
+
+   1 | kafka:
+   2 |   brokers: "9.134.132.205:19092" # 若远程连接替换为服务器IP
+   3 |   topic: "test-topic" # 默认Topic名称
+   4 | 
+   5 |   # SASL认证（与docker-compose.yml中的配置完全一致）
+   6 |   sasl:
+   7 |     username: "admin"
+   8 |     password: "123456"
+   9 |     mechanism: "SCRAM-SHA-256"
+
+
+
+// ====== FILE: docker-compose.yml ======
+
+   1 | version: "2"
+   2 | 
+   3 | services:
+   4 |   kafka-0:
+   5 |     image: docker.io/bitnami/kafka:3.5
+   6 |     container_name: kafka-0
+   7 |     ports:
+   8 |       - 19092:9092
+   9 |       - 19093:9093      
+  10 |     environment:
+  11 |       # KRaft settings
+  12 |       - KAFKA_ENABLE_KRAFT=yes
+  13 |       - KAFKA_CFG_NODE_ID=0
+  14 |       - KAFKA_CFG_PROCESS_ROLES=controller,broker
+  15 |       - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka-0:9093,1@kafka-1:9093,2@kafka-2:9093
+  16 |       - KAFKA_KRAFT_CLUSTER_ID=abcdefghijklmnopqrstuv
+  17 |       # Listeners
+  18 |       - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+  19 |       - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://${HOST_CONFIG}:19092
+  20 |       - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+  21 |       - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+  22 |       - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+  23 |       - KAFKA_CFG_MESSAGE_MAX_BYTES=33554432
+  24 |     volumes:
+  25 |       - ./data/kafka0:/root/bitnami/kafka
+  26 |     networks:
+  27 |       - mx-wk
+  28 | 
+  29 |   kafka-1:
+  30 |     image: docker.io/bitnami/kafka:3.5
+  31 |     container_name: kafka-1
+  32 |     ports:
+  33 |       - 29092:9092
+  34 |       - 29093:9093 
+  35 |     environment:
+  36 |       # KRaft settings
+  37 |       - KAFKA_ENABLE_KRAFT=yes
+  38 |       - KAFKA_CFG_NODE_ID=1
+  39 |       - KAFKA_CFG_PROCESS_ROLES=controller,broker
+  40 |       - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka-0:9093,1@kafka-1:9093,2@kafka-2:9093
+  41 |       - KAFKA_KRAFT_CLUSTER_ID=abcdefghijklmnopqrstuv
+  42 |       # Listeners
+  43 |       - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+  44 |       - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://${HOST_CONFIG}:29092
+  45 |       - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+  46 |       - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+  47 |       - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+  48 |       - KAFKA_CFG_MESSAGE_MAX_BYTES=33554432
+  49 |     volumes:
+  50 |       - ./data/kafka1:/root/bitnami/kafka
+  51 |     networks:
+  52 |       - mx-wk
+  53 | 
+  54 |   kafka-2:
+  55 |     image: docker.io/bitnami/kafka:3.5
+  56 |     container_name: kafka-2
+  57 |     ports:
+  58 |       - 39092:9092
+  59 |       - 39093:9093 
+  60 |     environment:
+  61 |       # KRaft settings
+  62 |       - KAFKA_ENABLE_KRAFT=yes
+  63 |       - KAFKA_CFG_NODE_ID=2
+  64 |       - KAFKA_CFG_PROCESS_ROLES=controller,broker
+  65 |       - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka-0:9093,1@kafka-1:9093,2@kafka-2:9093
+  66 |       - KAFKA_KRAFT_CLUSTER_ID=abcdefghijklmnopqrstuv
+  67 |       # Listeners
+  68 |       - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093
+  69 |       - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://${HOST_CONFIG}:39092
+  70 |       - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+  71 |       - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+  72 |       - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+  73 |       - KAFKA_CFG_MESSAGE_MAX_BYTES=33554432
+  74 |     volumes:
+  75 |       - ./data/kafka2:/root/bitnami/kafka
+  76 |     networks:
+  77 |       - mx-wk      
+  78 | 
+  79 |   kafkaui:
+  80 |     image: provectuslabs/kafka-ui:latest   
+  81 |     container_name: kafkaui
+  82 |     ports:
+  83 |      - 7080:8080
+  84 |     depends_on:
+  85 |       - kafka-0
+  86 |       - kafka-1
+  87 |       - kafka-2
+  88 |     environment:
+  89 |      - KAFKA_CLUSTERS_0_NAME=mx
+  90 |      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=${HOST_CONFIG}:19092,${HOST_CONFIG}:29092,${HOST_CONFIG}:39092
+  91 |     networks:
+  92 |       - mx-wk
+  93 |       
+  94 | networks:
+  95 |   mx-wk:
+  96 |     external: true
+  97 |     name: mx-wk
+
+
+
+// ====== FILE: main.go ======
+
+   1 | package main
+   2 | 
+   3 | import (
+   4 | 	"fmt"
+   5 | 	"log"
+   6 | 	"time"
+   7 | 
+   8 | 	"github.com/confluentinc/confluent-kafka-go/kafka"
+   9 | 	"github.com/spf13/viper"
+  10 | )
+  11 | 
+  12 | type Config struct {
+  13 | 	Kafka struct {
+  14 | 		Brokers string `mapstructure:"brokers"`
+  15 | 		Topic   string `mapstructure:"topic"`
+  16 | 		SASL    struct {
+  17 | 			Username  string `mapstructure:"username"`
+  18 | 			Password  string `mapstructure:"password"`
+  19 | 			Mechanism string `mapstructure:"mechanism"`
+  20 | 		} `mapstructure:"sasl"`
+  21 | 	} `mapstructure:"kafka"`
+  22 | }
+  23 | 
+  24 | func main() {
+  25 | 	// 读取配置
+  26 | 	v := viper.New()
+  27 | 	v.SetConfigFile("kafka.yaml")
+  28 | 	v.SetConfigType("yaml")
+  29 | 
+  30 | 	if err := v.ReadInConfig(); err != nil {
+  31 | 		log.Fatalf("配置文件读取失败: %v", err)
+  32 | 	}
+  33 | 
+  34 | 	var cfg Config
+  35 | 	if err := v.Unmarshal(&cfg); err != nil {
+  36 | 		log.Fatalf("配置解析失败: %v", err)
+  37 | 	}
+  38 | 
+  39 | 	// 连接Kafka
+  40 | 	producer, err := kafka.NewProducer(&kafka.ConfigMap{
+  41 | 		"bootstrap.servers": cfg.Kafka.Brokers,
+  42 | 		"security.protocol": "SASL_PLAINTEXT",
+  43 | 		"sasl.mechanism":    cfg.Kafka.SASL.Mechanism,
+  44 | 		"sasl.username":     cfg.Kafka.SASL.Username,
+  45 | 		"sasl.password":     cfg.Kafka.SASL.Password,
+  46 | 	})
+  47 | 	if err != nil {
+  48 | 		log.Fatalf("Kafka连接失败: %v", err)
+  49 | 	}
+  50 | 	defer producer.Close()
+  51 | 
+  52 | 	// 发送测试消息
+  53 | 	topic := cfg.Kafka.Topic
+  54 | 	deliveryChan := make(chan kafka.Event)
+  55 | 
+  56 | 	// 使用当前时间戳创建消息内容
+  57 | 	currentTime := time.Now().Format(time.RFC3339)
+  58 | 	message := fmt.Sprintf("Hello Kafka - %s", currentTime)
+  59 | 
+  60 | 	err = producer.Produce(&kafka.Message{
+  61 | 		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+  62 | 		Value:          []byte(message),
+  63 | 	}, deliveryChan)
+  64 | 
+  65 | 	if err != nil {
+  66 | 		log.Fatalf("消息发送失败: %v", err)
+  67 | 	}
+  68 | 
+  69 | 	// 等待消息确认
+  70 | 	e := <-deliveryChan
+  71 | 	m := e.(*kafka.Message)
+  72 | 
+  73 | 	if m.TopicPartition.Error != nil {
+  74 | 		log.Fatalf("消息发送失败: %v", m.TopicPartition.Error)
+  75 | 	}
+  76 | 
+  77 | 	fmt.Printf("消息 '%s' 已发送到 %s 的分区 %d\n", message, *m.TopicPartition.Topic, m.TopicPartition.Partition)
+  78 | }
+
+
+
+// ====== FILE: producer/go.mod ======
+
+   1 | module kafka_producer
+   2 | 
+   3 | go 1.23.4
+   4 | 
+   5 | require (
+   6 | 	github.com/confluentinc/confluent-kafka-go v1.9.2
+   7 | 	github.com/spf13/viper v1.20.1
+   8 | )
+   9 | 
+  10 | require (
+  11 | 	github.com/fsnotify/fsnotify v1.8.0 // indirect
+  12 | 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
+  13 | 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
+  14 | 	github.com/sagikazarmark/locafero v0.7.0 // indirect
+  15 | 	github.com/sourcegraph/conc v0.3.0 // indirect
+  16 | 	github.com/spf13/afero v1.12.0 // indirect
+  17 | 	github.com/spf13/cast v1.7.1 // indirect
+  18 | 	github.com/spf13/pflag v1.0.6 // indirect
+  19 | 	github.com/subosito/gotenv v1.6.0 // indirect
+  20 | 	go.uber.org/atomic v1.9.0 // indirect
+  21 | 	go.uber.org/multierr v1.9.0 // indirect
+  22 | 	golang.org/x/sys v0.29.0 // indirect
+  23 | 	golang.org/x/text v0.21.0 // indirect
+  24 | 	gopkg.in/yaml.v3 v3.0.1 // indirect
+  25 | )
+
+
+
+// ====== FILE: producer/main.go ======
+
+   1 | package main
+   2 | 
+   3 | import (
+   4 | 	"fmt"
+   5 | 	"log"
+   6 | 	"time"
+   7 | 
+   8 | 	"github.com/confluentinc/confluent-kafka-go/kafka"
+   9 | 	"github.com/spf13/viper"
+  10 | )
+  11 | 
+  12 | type Config struct {
+  13 | 	Kafka struct {
+  14 | 		Brokers string `mapstructure:"brokers"`
+  15 | 		Topic   string `mapstructure:"topic"`
+  16 | 		SASL    struct {
+  17 | 			Username  string `mapstructure:"username"`
+  18 | 			Password  string `mapstructure:"password"`
+  19 | 			Mechanism string `mapstructure:"mechanism"`
+  20 | 		} `mapstructure:"sasl"`
+  21 | 	} `mapstructure:"kafka"`
+  22 | }
+  23 | 
+  24 | func main() {
+  25 | 	// 读取配置
+  26 | 	v := viper.New()
+  27 | 	v.SetConfigFile("../kafka.yaml")
+  28 | 	v.SetConfigType("yaml")
+  29 | 
+  30 | 	if err := v.ReadInConfig(); err != nil {
+  31 | 		log.Fatalf("配置文件读取失败: %v", err)
+  32 | 	}
+  33 | 
+  34 | 	var cfg Config
+  35 | 	if err := v.Unmarshal(&cfg); err != nil {
+  36 | 		log.Fatalf("配置解析失败: %v", err)
+  37 | 	}
+  38 | 
+  39 | 	fmt.Println("开始创建Kafka生产者...")
+  40 | 	fmt.Printf("连接到服务器: %s\n", cfg.Kafka.Brokers)
+  41 | 	fmt.Printf("主题: %s\n", cfg.Kafka.Topic)
+  42 | 
+  43 | 	// 连接Kafka
+  44 | 	producer, err := kafka.NewProducer(&kafka.ConfigMap{
+  45 | 		"bootstrap.servers": cfg.Kafka.Brokers,
+  46 | 		"security.protocol": "SASL_PLAINTEXT",
+  47 | 		"sasl.mechanism":    cfg.Kafka.SASL.Mechanism,
+  48 | 		"sasl.username":     cfg.Kafka.SASL.Username,
+  49 | 		"sasl.password":     cfg.Kafka.SASL.Password,
+  50 | 	})
+  51 | 	if err != nil {
+  52 | 		log.Fatalf("Kafka连接失败: %v", err)
+  53 | 	}
+  54 | 	defer producer.Close()
+  55 | 
+  56 | 	// 发送测试消息
+  57 | 	topic := cfg.Kafka.Topic
+  58 | 	deliveryChan := make(chan kafka.Event)
+  59 | 
+  60 | 	// 使用当前时间戳创建消息内容
+  61 | 	currentTime := time.Now().Format(time.RFC3339)
+  62 | 	message := fmt.Sprintf("Hello Kafka - %s", currentTime)
+  63 | 
+  64 | 	err = producer.Produce(&kafka.Message{
+  65 | 		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+  66 | 		Value:          []byte(message),
+  67 | 	}, deliveryChan)
+  68 | 
+  69 | 	if err != nil {
+  70 | 		log.Fatalf("消息发送失败: %v", err)
+  71 | 	}
+  72 | 
+  73 | 	// 等待消息确认
+  74 | 	e := <-deliveryChan
+  75 | 	m := e.(*kafka.Message)
+  76 | 
+  77 | 	if m.TopicPartition.Error != nil {
+  78 | 		log.Fatalf("消息发送失败: %v", m.TopicPartition.Error)
+  79 | 	}
+  80 | 
+  81 | 	fmt.Printf("消息 '%s' 已发送到 %s 的分区 %d\n", message, *m.TopicPartition.Topic, m.TopicPartition.Partition)
+  82 | }
+
+
+
+// ====== FILE: consumer/go.mod ======
+
+   1 | module kafka_consumer
+   2 | 
+   3 | go 1.23.4
+   4 | 
+   5 | require (
+   6 | 	github.com/confluentinc/confluent-kafka-go v1.9.2
+   7 | 	github.com/spf13/viper v1.20.1
+   8 | )
+   9 | 
+  10 | require (
+  11 | 	github.com/fsnotify/fsnotify v1.8.0 // indirect
+  12 | 	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
+  13 | 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
+  14 | 	github.com/sagikazarmark/locafero v0.7.0 // indirect
+  15 | 	github.com/sourcegraph/conc v0.3.0 // indirect
+  16 | 	github.com/spf13/afero v1.12.0 // indirect
+  17 | 	github.com/spf13/cast v1.7.1 // indirect
+  18 | 	github.com/spf13/pflag v1.0.6 // indirect
+  19 | 	github.com/subosito/gotenv v1.6.0 // indirect
+  20 | 	go.uber.org/atomic v1.9.0 // indirect
+  21 | 	go.uber.org/multierr v1.9.0 // indirect
+  22 | 	golang.org/x/sys v0.29.0 // indirect
+  23 | 	golang.org/x/text v0.21.0 // indirect
+  24 | 	gopkg.in/yaml.v3 v3.0.1 // indirect
+  25 | )
+
+
+
+// ====== FILE: consumer/main.go ======
+
+   1 | package main
+   2 | 
+   3 | import (
+   4 | 	"fmt"
+   5 | 	"log"
+   6 | 	"os"
+   7 | 	"os/signal"
+   8 | 	"syscall"
+   9 | 
+  10 | 	"github.com/confluentinc/confluent-kafka-go/kafka"
+  11 | 	"github.com/spf13/viper"
+  12 | )
+  13 | 
+  14 | // Config 配置结构
+  15 | type Config struct {
+  16 | 	Kafka struct {
+  17 | 		Brokers string `mapstructure:"brokers"`
+  18 | 		Topic   string `mapstructure:"topic"`
+  19 | 		SASL    struct {
+  20 | 			Username  string `mapstructure:"username"`
+  21 | 			Password  string `mapstructure:"password"`
+  22 | 			Mechanism string `mapstructure:"mechanism"`
+  23 | 		} `mapstructure:"sasl"`
+  24 | 	} `mapstructure:"kafka"`
+  25 | }
+  26 | 
+  27 | func main() {
+  28 | 	// 读取配置
+  29 | 	v := viper.New()
+  30 | 	v.SetConfigFile("../kafka.yaml")
+  31 | 	v.SetConfigType("yaml")
+  32 | 
+  33 | 	if err := v.ReadInConfig(); err != nil {
+  34 | 		log.Fatalf("配置文件读取失败: %v", err)
+  35 | 	}
+  36 | 
+  37 | 	var cfg Config
+  38 | 	if err := v.Unmarshal(&cfg); err != nil {
+  39 | 		log.Fatalf("配置解析失败: %v", err)
+  40 | 	}
+  41 | 
+  42 | 	fmt.Println("开始创建Kafka消费者...")
+  43 | 	fmt.Printf("连接到服务器: %s\n", cfg.Kafka.Brokers)
+  44 | 	fmt.Printf("主题: %s\n", cfg.Kafka.Topic)
+  45 | 
+  46 | 	// 创建消费者
+  47 | 	consumer, err := kafka.NewConsumer(&kafka.ConfigMap{
+  48 | 		"bootstrap.servers": cfg.Kafka.Brokers,
+  49 | 		"group.id":          "test-consumer-group",
+  50 | 		"auto.offset.reset": "earliest",
+  51 | 		"security.protocol": "SASL_PLAINTEXT",
+  52 | 		"sasl.mechanism":    cfg.Kafka.SASL.Mechanism,
+  53 | 		"sasl.username":     cfg.Kafka.SASL.Username,
+  54 | 		"sasl.password":     cfg.Kafka.SASL.Password,
+  55 | 	})
+  56 | 
+  57 | 	if err != nil {
+  58 | 		log.Fatalf("消费者创建失败: %v", err)
+  59 | 	}
+  60 | 	defer consumer.Close()
+  61 | 
+  62 | 	// 订阅主题
+  63 | 	err = consumer.SubscribeTopics([]string{cfg.Kafka.Topic}, nil)
+  64 | 	if err != nil {
+  65 | 		log.Fatalf("主题订阅失败: %v", err)
+  66 | 	}
+  67 | 
+  68 | 	fmt.Printf("成功订阅主题: %s, 等待消息...\n", cfg.Kafka.Topic)
+  69 | 
+  70 | 	// 捕获中断信号
+  71 | 	sigchan := make(chan os.Signal, 1)
+  72 | 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
+  73 | 
+  74 | 	run := true
+  75 | 	for run {
+  76 | 		select {
+  77 | 		case sig := <-sigchan:
+  78 | 			fmt.Printf("捕获到信号 %v: 终止消费者\n", sig)
+  79 | 			run = false
+  80 | 		default:
+  81 | 			ev := consumer.Poll(100)
+  82 | 			if ev == nil {
+  83 | 				continue
+  84 | 			}
+  85 | 
+  86 | 			switch e := ev.(type) {
+  87 | 			case *kafka.Message:
+  88 | 				fmt.Printf("收到消息: %s\n", string(e.Value))
+  89 | 				fmt.Printf("主题分区: %v, 偏移量: %v\n", e.TopicPartition.Partition, e.TopicPartition.Offset)
+  90 | 			case kafka.Error:
+  91 | 				fmt.Printf("错误: %v\n", e)
+  92 | 				if e.Code() == kafka.ErrAllBrokersDown {
+  93 | 					run = false
+  94 | 				}
+  95 | 			default:
+  96 | 				fmt.Printf("忽略事件: %v\n", e)
+  97 | 			}
+  98 | 		}
+  99 | 	}
+ 100 | 
+ 101 | 	fmt.Println("消费者已停止")
+ 102 | }
+
+

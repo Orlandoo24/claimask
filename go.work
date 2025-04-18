@@ -1,6 +1,7 @@
-go 1.23.4
+go 1.23.0
 
 use (
 	.
-	./scripts/richx
+	./scripts/richx_test
+	./scripts/kafka_go
 )

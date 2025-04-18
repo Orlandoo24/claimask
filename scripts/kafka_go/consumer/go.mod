@@ -1,10 +1,11 @@
-module test_kafka
+module kafka_consumer
 
-go 1.21.0
+go 1.23.4
 
-toolchain go1.23.4
-
-require github.com/spf13/viper v1.20.1
+require (
+	github.com/confluentinc/confluent-kafka-go v1.9.2
+	github.com/spf13/viper v1.20.1
+)
 
 require (
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
@@ -22,5 +23,3 @@ require (
 	golang.org/x/text v0.21.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-replace github.com/confluentinc/confluent-kafka-go => github.com/confluentinc/confluent-kafka-go v1.9.2

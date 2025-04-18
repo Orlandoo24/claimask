@@ -18,7 +18,7 @@ import (
 	"claimask/internal/richx/model"
 )
 
-const redisLockKey = "richx:claim:lock:%s"
+const redisLockKey = "richx_test:claim:lock:%s"
 
 // DB是数据库服务
 type DB struct {
@@ -56,7 +56,7 @@ func NewClaimService(db *DB, redisClient *RedisClient, kafkaProducer *KafkaProdu
 
 // InitDB 初始化数据库连接
 func InitDB() (*DB, error) {
-	db, err := gorm.Open("mysql", "root:123@jiaru@tcp(localhost:3306)/richx?charset=utf8mb4&parseTime=True&loc=Local")
+	db, err := gorm.Open("mysql", "root:123@jiaru@tcp(localhost:3306)/richx_test?charset=utf8mb4&parseTime=True&loc=Local")
 	if err != nil {
 		return nil, err
 	}
