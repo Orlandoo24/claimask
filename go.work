@@ -1,7 +1,10 @@
-go 1.23.0
+go 1.23.4
 
 use (
 	.
-	./scripts/richx_test
 	./scripts/kafka_go
+	./scripts/kafka_go/consumer
+	./scripts/kafka_go/producer
+	./scripts/richx_test
+	./scripts/dumy_service
 )

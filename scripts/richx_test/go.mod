@@ -1,4 +1,4 @@
-module richx
+module richx_test
 
 go 1.23.0
 
