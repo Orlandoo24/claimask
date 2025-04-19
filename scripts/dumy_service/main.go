@@ -1,4 +1,4 @@
-package dumy_service
+package main
 
 import (
 	"log"
