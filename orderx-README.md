@@ -155,5 +155,4 @@ func LogTxFlow(tx *model.Transaction) {
 }
 ```
 
-需要我继续展开哪个模块的具体实现细节？或是需要调整目录结构中的某些部分？
 
