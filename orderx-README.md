@@ -1,4 +1,3 @@
-根据区块链支付系统特点，我为您设计以下Go项目结构：
 
 ```markdown
 # astro-orderx Go项目重构结构
