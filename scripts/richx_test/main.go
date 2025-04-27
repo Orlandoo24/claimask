@@ -130,17 +130,17 @@ type ChainClaimRequest struct {
 
 // 依赖服务接口
 
-// DB是数据库服务
+// DB 是数据库服务
 type DB struct {
 	*gorm.DB
 }
 
-// RedisClient是Redis客户端
+// RedisClient 是Redis客户端
 type RedisClient struct {
 	client *redis.Client
 }
 
-// KafkaProducer是Kafka生产者
+// KafkaProducer 是Kafka生产者
 type KafkaProducer struct {
 	producer sarama.SyncProducer
 	enabled  bool
@@ -248,7 +248,7 @@ func initKafka(cfg *Config) (*KafkaProducer, error) {
 	}, nil
 }
 
-// 分布式锁实现
+// AcquireLock 分布式锁实现
 func (r *RedisClient) AcquireLock(ctx context.Context, address string, expiration time.Duration) (bool, error) {
 	lockKey := fmt.Sprintf(redisLockKey, address)
 	return r.client.SetNX(lockKey, "1", expiration).Result()

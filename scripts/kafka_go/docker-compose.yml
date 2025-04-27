@@ -1,5 +1,5 @@
 version: "2"
-
+# 6 Partitions better
 services:
   kafka-0:
     image: docker.io/bitnami/kafka:3.5

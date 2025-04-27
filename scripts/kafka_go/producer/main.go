@@ -38,7 +38,7 @@ func main() {
 
 	fmt.Println("开始创建Kafka生产者...")
 	fmt.Printf("连接到服务器: %s\n", cfg.Kafka.Brokers)
-	fmt.Printf("主题: %s\n", cfg.Kafka.Topic)
+	fmt.Printf("主题: %s\n", cfg.Kafka.Topic) // 从配置读取的test-topic
 
 	// 连接Kafka
 	producer, err := kafka.NewProducer(&kafka.ConfigMap{
