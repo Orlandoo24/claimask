@@ -1,4 +1,3 @@
-根据区块链支付系统特点，我为您设计以下Go项目结构：
 
 ```markdown
 # astro-orderx Go项目重构结构
@@ -156,5 +155,4 @@ func LogTxFlow(tx *model.Transaction) {
 }
 ```
 
-需要我继续展开哪个模块的具体实现细节？或是需要调整目录结构中的某些部分？
 
