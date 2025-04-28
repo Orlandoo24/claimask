@@ -5,19 +5,19 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-//
-// * 带速率限制和地址过滤的延时队列处理器
-// * 功能特点：
-// * 1. 每分钟批量处理一次队列
-// * 2. 24小时地址去重
-// * 3. 单次交易金额限制
-// */
+/**
+* 带速率限制和地址过滤的延时队列处理器
+* 功能特点：
+* 1. 每分钟批量处理一次队列
+* 2. 24小时地址去重
+* 3. 单次交易金额限制
+*/
 module.exports = class slowSpeedBox {
-// /​**​
-// * @param {Function} fun - 实际处理函数，需接收 address, privateKey, messageQueue 参数
-// * @param {string} address - 发送方钱包地址
-// * @param {string} privateKey - 发送方私钥
-// */
+/**
+* @param {Function} fun - 实际处理函数，需接收 address, privateKey, messageQueue 参数
+* @param {string} address - 发送方钱包地址
+* @param {string} privateKey - 发送方私钥
+*/
 constructor(fun, address, privateKey) {
     // 初始化等待处理的地址队列
     this.addressQueue = [];
@@ -51,11 +51,11 @@ constructor(fun, address, privateKey) {
     }, 86400000); // 24小时间隔
 }
 
-// /​**​
-// * 将消息加入处理队列
-// * @param {Object} message - 包含地址和金额的消息对象
-// * @throws {Error} 包含具体错误原因
-// */
+/**
+* 将消息加入处理队列
+* @param {Object} message - 包含地址和金额的消息对象
+* @throws {Error} 包含具体错误原因
+*/
 async enqueue(message) {
     try {
         // 安全校验层
