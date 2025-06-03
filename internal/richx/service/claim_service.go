@@ -25,12 +25,12 @@ type DB struct {
 	*gorm.DB
 }
 
-// RedisClient是Redis客户端
+// RedisClient RedisClient是Redis客户端
 type RedisClient struct {
 	client *redis.Client
 }
 
-// KafkaProducer是Kafka生产者
+// KafkaProducer KafkaProducer是Kafka生产者
 type KafkaProducer struct {
 	producer sarama.SyncProducer
 	enabled  bool

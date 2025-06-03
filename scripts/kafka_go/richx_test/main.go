@@ -15,6 +15,7 @@ import (
 	"github.com/IBM/sarama"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis"
+	"github.com/google/uuid"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"github.com/spf13/viper"
@@ -47,8 +48,9 @@ type Config struct {
 // 配置常量
 const (
 	// Redis相关配置
-	redisLockExpiration = 30 * time.Second
-	redisLockKey        = "claim:lock:%s" // 用户地址作为锁的后缀
+	redisLockExpiration    = 10 * time.Second // 更合理的初始锁时间
+	redisLockKey           = "claim:lock:%s"  // 用户地址作为锁的后缀
+	redisLockRenewInterval = 4 * time.Second  // 续期间隔，小于过期时间的一半
 
 	// Kafka相关配置
 	kafkaMaxRetry = 3
@@ -248,15 +250,59 @@ func initKafka(cfg *Config) (*KafkaProducer, error) {
 	}, nil
 }
 
-// AcquireLock 分布式锁实现
-func (r *RedisClient) AcquireLock(ctx context.Context, address string, expiration time.Duration) (bool, error) {
+// AcquireLock 分布式锁实现 - 使用唯一标识
+func (r *RedisClient) AcquireLock(ctx context.Context, address string, expiration time.Duration) (bool, string, error) {
 	lockKey := fmt.Sprintf(redisLockKey, address)
-	return r.client.SetNX(lockKey, "1", expiration).Result()
+	// 生成唯一锁ID
+	lockID := uuid.New().String()
+	acquired, err := r.client.SetNX(lockKey, lockID, expiration).Result()
+	return acquired, lockID, err
 }
 
-func (r *RedisClient) ReleaseLock(ctx context.Context, address string) error {
+// RenewLock 为指定锁续期
+func (r *RedisClient) RenewLock(ctx context.Context, address string, lockID string, expiration time.Duration) (bool, error) {
 	lockKey := fmt.Sprintf(redisLockKey, address)
-	return r.client.Del(lockKey).Err()
+
+	// 使用Lua脚本确保只有锁的持有者能续期
+	script := `
+		if redis.call("GET", KEYS[1]) == ARGV[1] then
+			return redis.call("PEXPIRE", KEYS[1], ARGV[2])
+		else
+			return 0
+		end
+	`
+
+	result, err := r.client.Eval(script, []string{lockKey}, lockID, int(expiration.Milliseconds())).Result()
+	if err != nil {
+		return false, err
+	}
+
+	return result.(int64) == 1, nil
+}
+
+// ReleaseLock 释放锁 - 确保只有锁的持有者能释放锁
+func (r *RedisClient) ReleaseLock(ctx context.Context, address string, lockID string) error {
+	lockKey := fmt.Sprintf(redisLockKey, address)
+
+	// 使用Lua脚本确保只有锁的持有者能释放锁
+	script := `
+		if redis.call("GET", KEYS[1]) == ARGV[1] then
+			return redis.call("DEL", KEYS[1])
+		else
+			return 0
+		end
+	`
+
+	result, err := r.client.Eval(script, []string{lockKey}, lockID).Result()
+	if err != nil {
+		return err
+	}
+
+	if result.(int64) != 1 {
+		return fmt.Errorf("锁已被其他进程释放")
+	}
+
+	return nil
 }
 
 // Close 关闭Redis连接
@@ -355,7 +401,7 @@ func (s *ClaimService) Claim(ctx context.Context, address string) (*Response, er
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, lockTimeout)
 	defer cancel()
 
-	acquired, err := s.redisClient.AcquireLock(ctxWithTimeout, address, redisLockExpiration)
+	acquired, lockID, err := s.redisClient.AcquireLock(ctxWithTimeout, address, redisLockExpiration)
 	if err != nil {
 		return &Response{Code: 500, Message: "获取锁失败: " + err.Error()}, err
 	}
@@ -364,8 +410,45 @@ func (s *ClaimService) Claim(ctx context.Context, address string) (*Response, er
 		return &Response{Code: 429, Message: "您有一个正在处理的领取请求，请稍后再试"}, nil
 	}
 
+	// 启动锁续期goroutine
+	stopRenew := make(chan struct{})
+	lockRenewed := make(chan struct{})
+	defer close(stopRenew)
+
+	go func() {
+		ticker := time.NewTicker(redisLockRenewInterval)
+		defer ticker.Stop()
+
+		// 发送信号表示goroutine已启动
+		select {
+		case lockRenewed <- struct{}{}:
+		default:
+		}
+
+		for {
+			select {
+			case <-ticker.C:
+				renewed, err := s.redisClient.RenewLock(ctx, address, lockID, redisLockExpiration)
+				if err != nil {
+					s.logger.Printf("锁续期失败: %v", err)
+					return
+				}
+				if !renewed {
+					s.logger.Printf("锁已被其他进程获取，续期失败")
+					return
+				}
+			case <-stopRenew:
+				return
+			}
+		}
+	}()
+
+	// 等待锁续期goroutine启动
+	<-lockRenewed
+
+	// 确保锁会被释放
 	defer func() {
-		if err := s.redisClient.ReleaseLock(ctx, address); err != nil {
+		if err := s.redisClient.ReleaseLock(ctx, address, lockID); err != nil {
 			s.logger.Printf("释放锁失败: %v", err)
 		}
 	}()
